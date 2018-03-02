@@ -10,7 +10,7 @@
     * Tab comparing
     * Color coded cells and relevant areas
 * Read AFR target
-* Config fra fil
+* Config fra fil, yml spring
 * Data browser m tabell. Mekanismer for
     * Mekanismer for å finne overrun, quickgearshift osv.
     * Rare verdier AFR, søk?

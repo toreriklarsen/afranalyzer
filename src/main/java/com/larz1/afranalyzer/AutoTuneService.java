@@ -7,7 +7,8 @@ import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileReader;
@@ -21,7 +22,7 @@ import static com.larz1.afranalyzer.CalcUtil.findIndex;
 /**
  * Created by tor.erik.larsen on 03/07/2017.
  */
-@Component
+@Service
 public class AutoTuneService {
     private static final Logger logger = LoggerFactory.getLogger(AutoTuneService.class);
 
@@ -30,24 +31,39 @@ public class AutoTuneService {
         COUNT
     }
 
-    double[] tpsArray = {0.0, 0.8, 2.3, 4.7, 7.8, 10.2, 14.8, 20.3, 29.7, 39.8, 50.0, 75.0, 100.0};
+    static double[]  tpsArray = {0.0, 0.8, 2.3, 4.7, 7.8, 10.2, 14.8, 20.3, 29.7, 39.8, 50.0, 75.0, 100.0};
     //double[] tpsArray = {0.0, 2.0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.9, 45.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0};
-    double[] rpmArray = {0.0, 1000.0, 2000.0, 3000.0, 4000.0, 5000.0, 6000.0, 7000.0, 8000.0, 9000.0, 10000.0, 11000.0, 12000.0, 12500.0, 13000.0, 13500.0, 14000.0};
+    static double[] rpmArray = {0.0, 1000.0, 2000.0, 3000.0, 4000.0, 5000.0, 6000.0, 7000.0, 8000.0, 9000.0, 10000.0, 11000.0, 12000.0, 12500.0, 13000.0, 13500.0, 14000.0};
 
-    @Value("${afrfile:data/almeria-before.csv}")
+    @Value("${afr.file:data/almeria-before.csv}")
     private String afrFile;
 
-    @Value("${targetafrfile:}")
+    /*
+    @Value("${targetafr.file}")
     private String targetAfrFile;
+    */
 
     @Value("${printafr:true}")
     private String printAfr;
 
+    @Value("${filterMinMax:true}")
+    private String filterMinMax;
+
     @Value("${minafr:10.0}")
-    private Double minAfr = 10.0d;
+    private Double minAfr;
 
     @Value("${maxafr:17.1}")
-    private Double maxAfr = 16.0d;
+    private Double maxAfr;
+
+    @Value("${filterMinCoolantTemp:true}")
+    private String filterMinCoolantTemp;
+
+    @Value("${MinCoolantTemp:80}")
+    private Integer minCoolantTemp;
+
+
+    public AutoTuneService() {
+    }
 
     public void print(PRINT print, AdjAFRValue[][] mArr) {
         Boolean[][] bArr = new Boolean[tpsArray.length][rpmArray.length];
@@ -140,11 +156,11 @@ public class AutoTuneService {
     }
 
     // todo tmp
-    public static List<AFRValue> readAfrFile() throws IOException {
+    public List<AFRValue> readAfrFile() throws IOException {
         return readAfrFile("data/almeria-before.csv");
     }
 
-    public static List<AFRValue> readAfrFile(String file) throws IOException {
+    public List<AFRValue> readAfrFile(String file) throws IOException {
         logger.trace("readAfrFile {}", file);
 
         CsvSchema schema = CsvSchema.builder()
@@ -271,9 +287,11 @@ public class AutoTuneService {
 
         //dumpAfrValues(rawAfrValues);
 
+        /*
         if (!targetAfrFile.isEmpty()) {
             targetAfrValues = readAfrFile(targetAfrFile);
         }
+        */
         AdjAFRValue[][] origMapArray = convert2Map(rawAfrValues);
 
         // filter out irellevant data
