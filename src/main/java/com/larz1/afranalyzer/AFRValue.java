@@ -1,18 +1,28 @@
 package com.larz1.afranalyzer;
 
 public class AFRValue {
+    // todo make private NBNBNBNB
     public double Time;
     public double ZX_RPM;
     public double ZX_TPS;
     public double ZX_GEAR;
     public double LLC_AFR;
-    public boolean skip = false;
+    private boolean skip = false;
 
     public AFRValue() {
     }
 
+    public AFRValue(AFRValue a) {
+        this.Time = a.getTime();
+        this.ZX_RPM = a.getZX_RPM();
+        this.ZX_TPS = a.getZX_TPS();
+        this.ZX_GEAR = a.getZX_GEAR();
+        this.LLC_AFR = a.getLLC_AFR();
+        this.skip = a.isSkip();
+    }
+
     public AFRValue(double time, double ZX_RPM, double ZX_TPS, double ZX_GEAR, double LLC_AFR) {
-        Time = time;
+        this.Time = time;
         this.ZX_RPM = ZX_RPM;
         this.ZX_TPS = ZX_TPS;
         this.ZX_GEAR = ZX_GEAR;
@@ -63,5 +73,13 @@ public class AFRValue {
 
     public void setLLC_AFR(double LLC_AFR) {
         this.LLC_AFR = LLC_AFR;
+    }
+
+    public boolean isSkip() {
+        return skip;
+    }
+
+    public void setSkip(boolean skip) {
+        this.skip = skip;
     }
 }

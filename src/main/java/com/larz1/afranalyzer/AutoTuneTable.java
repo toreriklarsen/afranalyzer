@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
@@ -37,6 +39,9 @@ import java.util.List;
 public class AutoTuneTable extends JFrame {
     private static final Logger logger = LoggerFactory
             .getLogger(AutoTuneTable.class);
+
+    @Autowired
+    private AfrAnalyzerSettings afrAnalyzerSettings;
 
     //@Autowired
     //private AfrModel afrModel;
@@ -74,12 +79,13 @@ public class AutoTuneTable extends JFrame {
 
 
     /* Protected so that they can be modified/disabled by subclasses */
-    protected JCheckBox headerBox;
-    protected JCheckBox footerBox;
-    protected JTextField headerField;
-    protected JTextField footerField;
+    protected JCheckBox maxAfrBox;
+    protected JCheckBox minAfrBox;
+    protected JTextField minAfrField;
+    protected JTextField maxAfrField;
 
-    List<AFRValue> afrValues;
+    List<AFRValue> rawAfrValues;
+    List<AFRValue> filteredAfrValues;
 
     private void loadRawData() {
         logger.debug("load raw data");
@@ -88,14 +94,15 @@ public class AutoTuneTable extends JFrame {
             autoTuneService.print(AutoTuneService.PRINT.AFR, targetMapArray, "Target");
             targetAfrModel.setMapArray(targetMapArray);
 
-            if ((afrValues == null) || (afrValues.isEmpty())) {
-                afrValues = autoTuneService.readAfrFile();
+            if ((rawAfrValues == null) || (rawAfrValues.isEmpty())) {
+                rawAfrValues = autoTuneService.readAfrFile();
             }
-            AdjAFRValue[][] rawMapArray = autoTuneService.convert2Map(afrValues);
+            AdjAFRValue[][] rawMapArray = autoTuneService.convert2Map(rawAfrValues);
             autoTuneService.print(AutoTuneService.PRINT.AFR, rawMapArray, "Raw");
             afrModel.setMapArray(rawMapArray);
 
-            AdjAFRValue[][] filteredMapArray = autoTuneService.convert2Map(autoTuneService.filter(afrValues));
+            filteredAfrValues = autoTuneService.filter(rawAfrValues);
+            AdjAFRValue[][] filteredMapArray = autoTuneService.convert2Map(filteredAfrValues);
             autoTuneService.print(AutoTuneService.PRINT.AFR, filteredMapArray, "Filtered");
             filteredAfrModel.setMapArray(filteredMapArray);
 
@@ -112,7 +119,8 @@ public class AutoTuneTable extends JFrame {
     /**
      * Constructs an instance of the demo.
      */
-    public AutoTuneTable() {
+    @Autowired
+    public AutoTuneTable(AfrAnalyzerSettings afrAnalyzerSettings) {
         super("AFRanalyzer 1.0");
 
         afrLoadButton = new JButton("load afr file");
@@ -121,6 +129,8 @@ public class AutoTuneTable extends JFrame {
         afrFileSelectButton = new JButton("select afr file");
         afrFileSelectButton.addActionListener(ae -> selectAfrFile());
         afrFileChooser = new JFileChooser(new File(System.getProperty("user.dir")));
+        FileFilter csvFilter = new FileNameExtensionFilter("CSV file", "csv");
+        afrFileChooser.addChoosableFileFilter(csvFilter);
 
         afrLabel = new JLabel("AFRanalyzer 1.0");
         afrLabel.setFont(new Font("Dialog", Font.BOLD, 16));
@@ -148,29 +158,21 @@ public class AutoTuneTable extends JFrame {
 
         String tooltipText;
 
-        tooltipText = "Include a page header";
-        headerBox = new JCheckBox("Header:", true);
-        headerBox.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ae) {
-                headerField.setEnabled(headerBox.isSelected());
-            }
-        });
-        headerBox.setToolTipText(tooltipText);
-        tooltipText = "Page Header (Use {0} to include page number)";
-        headerField = new JTextField("Final Grades - CSC 101");
-        headerField.setToolTipText(tooltipText);
+        tooltipText = "Max AFR filter";
+        maxAfrBox = new JCheckBox("Max Afr:", afrAnalyzerSettings.maxAfrEnabled);
+        maxAfrBox.addActionListener(ae -> checkMaxAfrFilter());
+        maxAfrBox.setToolTipText(tooltipText);
+        tooltipText = "Min AFR filter value";
+        maxAfrField = new JTextField("" + afrAnalyzerSettings.maxAfr, 4);
+        maxAfrField.setToolTipText(tooltipText);
 
-        tooltipText = "Include a page footer";
-        footerBox = new JCheckBox("Footer:", true);
-        footerBox.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ae) {
-                footerField.setEnabled(footerBox.isSelected());
-            }
-        });
-        footerBox.setToolTipText(tooltipText);
-        tooltipText = "Page Footer (Use {0} to Include Page Number)";
-        footerField = new JTextField("Page {0}");
-        footerField.setToolTipText(tooltipText);
+        tooltipText = "Min AFR filter";
+        minAfrBox = new JCheckBox("min Afr:", afrAnalyzerSettings.minAfrEnabled);
+        minAfrBox.addActionListener(ae -> checkMinAfrFilter());
+        minAfrBox.setToolTipText(tooltipText);
+        tooltipText = "Min AFR filter value";
+        minAfrField = new JTextField("" + afrAnalyzerSettings.minAfr);
+        minAfrField.setToolTipText(tooltipText);
 
         tooltipText = "Show the Print Dialog Before Printing";
         showPrintDialogBox = new JCheckBox("Show print dialog", true);
@@ -231,11 +233,11 @@ public class AutoTuneTable extends JFrame {
     private void selectAfrFile() {
         File file;
 
-        int rVal = afrFileChooser.showDialog(AutoTuneTable.this, "WWW");
+        int rVal = afrFileChooser.showDialog(AutoTuneTable.this, "Open");
         if (rVal == JFileChooser.APPROVE_OPTION) {
             try {
                 file = afrFileChooser.getSelectedFile();
-                this.afrValues = autoTuneService.readAfrFile(file);
+                this.rawAfrValues = autoTuneService.readAfrFile(file);
                 logger.debug("Opening afr file: {} ", file.getName());
             } catch (IOException ioe) {
                 logger.warn("Error opening afr file");
@@ -262,12 +264,12 @@ public class AutoTuneTable extends JFrame {
                         .addGroup(bottomPanelLayout.createSequentialGroup()
                                 .addContainerGap()
                                 .addGroup(bottomPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(headerBox)
-                                        .addComponent(footerBox))
+                                        .addComponent(maxAfrBox)
+                                        .addComponent(minAfrBox))
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(bottomPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
-                                        .addComponent(footerField)
-                                        .addComponent(headerField, GroupLayout.DEFAULT_SIZE, 180, Short.MAX_VALUE))
+                                        .addComponent(minAfrField)
+                                        .addComponent(maxAfrField, GroupLayout.DEFAULT_SIZE, 180, Short.MAX_VALUE))
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addGroup(bottomPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING, false)
                                         .addGroup(bottomPanelLayout.createSequentialGroup()
@@ -284,14 +286,14 @@ public class AutoTuneTable extends JFrame {
                 bottomPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
                         .addGroup(bottomPanelLayout.createSequentialGroup()
                                 .addGroup(bottomPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(headerBox)
-                                        .addComponent(headerField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(maxAfrBox)
+                                        .addComponent(maxAfrField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                                         .addComponent(interactiveBox)
                                         .addComponent(showPrintDialogBox))
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(bottomPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
-                                        .addComponent(footerBox)
-                                        .addComponent(footerField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(minAfrBox)
+                                        .addComponent(minAfrField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                                         .addComponent(fitWidthBox)
                                         .addComponent(printButton))
                                 .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -386,17 +388,17 @@ public class AutoTuneTable extends JFrame {
         MessageFormat header = null;
 
         /* if we should print a header */
-        if (headerBox.isSelected()) {
+        if (maxAfrBox.isSelected()) {
             /* create a MessageFormat around the header text */
-            header = new MessageFormat(headerField.getText());
+            header = new MessageFormat(maxAfrField.getText());
         }
 
         MessageFormat footer = null;
 
         /* if we should print a footer */
-        if (footerBox.isSelected()) {
+        if (minAfrBox.isSelected()) {
             /* create a MessageFormat around the footer text */
-            footer = new MessageFormat(footerField.getText());
+            footer = new MessageFormat(minAfrField.getText());
         }
 
         boolean fitWidth = fitWidthBox.isSelected();
@@ -434,6 +436,20 @@ public class AutoTuneTable extends JFrame {
                     "Printing Result",
                     JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private void checkMaxAfrFilter() {
+        maxAfrField.setEnabled(maxAfrBox.isSelected());
+        afrAnalyzerSettings.maxAfrEnabled = maxAfrBox.isSelected();
+        // rerun filter, for now reload
+        loadRawData();
+    }
+
+    private void checkMinAfrFilter() {
+        minAfrField.setEnabled(minAfrBox.isSelected());
+        afrAnalyzerSettings.minAfrEnabled = minAfrBox.isSelected();
+        // rerun filter, for now reload
+        loadRawData();
     }
 
 
@@ -483,7 +499,7 @@ public class AutoTuneTable extends JFrame {
             if ((value != null) && (value instanceof Number)) {
                 numberValue = (Number) value;
                 value = nf.format(numberValue.doubleValue());
-                setBackground(getCellColor(new Double((String)value)));
+                setBackground(getCellColor(new Double((String) value)));
             }
             super.setValue(value);
         }

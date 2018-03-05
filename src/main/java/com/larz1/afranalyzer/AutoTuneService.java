@@ -7,6 +7,7 @@ import com.fasterxml.jackson.dataformat.csv.CsvParser;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -26,6 +28,9 @@ import static com.larz1.afranalyzer.CalcUtil.findIndex;
 public class AutoTuneService {
     private static final Logger logger = LoggerFactory.getLogger(AutoTuneService.class);
 
+    @Autowired
+    private AfrAnalyzerSettings afrAnalyzerSettings;
+
     public enum PRINT {
         AFR,
         COUNT
@@ -35,32 +40,9 @@ public class AutoTuneService {
     //double[] tpsArray = {0.0, 2.0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.9, 45.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0};
     static double[] rpmArray = {0.0, 1000.0, 2000.0, 3000.0, 4000.0, 5000.0, 6000.0, 7000.0, 8000.0, 9000.0, 10000.0, 11000.0, 12000.0, 12500.0, 13000.0, 13500.0, 14000.0};
 
-    @Value("${afr.file:data/almeria-before.csv}")
-    private String afrFile;
-
-    /*
-    @Value("${targetafr.file}")
-    private String targetAfrFile;
-    */
 
     @Value("${printafr:true}")
     private String printAfr;
-
-    @Value("${filterMinMax:true}")
-    private String filterMinMax;
-
-    @Value("${minafr:10.0}")
-    private Double minAfr;
-
-    @Value("${maxafr:17.1}")
-    private Double maxAfr;
-
-    @Value("${filterMinCoolantTemp:true}")
-    private String filterMinCoolantTemp;
-
-    @Value("${MinCoolantTemp:80}")
-    private Integer minCoolantTemp;
-
 
     public AutoTuneService() {
     }
@@ -109,15 +91,6 @@ public class AutoTuneService {
             bArr[12][i] = new Boolean(true);
         }
 
-        // print header
-        /*
-        System.out.print("      ");
-        for (int j = 2; j < rpmArray.length - 1; j++) {
-            System.out.format("% 7d", j);
-        }
-        System.out.println();
-        System.out.print("      ");
-*/
         System.out.println("********** " + header + " **********");
         System.out.print("      ");
         System.out.print(ConsoleColors.GREEN);
@@ -158,7 +131,7 @@ public class AutoTuneService {
 
     // todo tmp
     public List<AFRValue> readAfrFile() throws IOException {
-        return readAfrFile("data/brno.csv");
+        return readAfrFile(afrAnalyzerSettings.afrFile);
     }
 
     public List<AFRValue> readAfrFile(String fileName) throws IOException {
@@ -193,9 +166,8 @@ public class AutoTuneService {
         return afrValues;
     }
 
-    // todo tmp
     public AdjAFRValue[][] readTargetAfrFile() throws IOException {
-        return readTargetAfrFile("data/zx10r-tel01-Target.csv");
+        return readTargetAfrFile(afrAnalyzerSettings.targetAfrFile);
     }
 
     public AdjAFRValue[][] readTargetAfrFile(String file) throws IOException {
@@ -223,38 +195,46 @@ public class AutoTuneService {
         final int[] prevGear = {6};
         final int[] gear = {0};
         final int[] i = {0};
+        List<AFRValue> retList = new ArrayList<>(dataList.size());
+
         dataList.forEach(data -> {
             gear[0] = (int) data.ZX_GEAR;
+            AFRValue a = new AFRValue(data);
+            a.setSkip(false);
 
-            if ((data.LLC_AFR < minAfr) || (data.LLC_AFR > maxAfr)) {
-                data.skip = true;
-                logger.trace("filtering out afr {} value out of range, tps:{} time:{}", data.LLC_AFR, data.ZX_TPS, data.Time);
-            } else if (data.ZX_RPM < 500) {
-                data.skip = true;
-                logger.trace("filtering out afr {} value,RPM lower than 500", data.LLC_AFR);
-            } else if (data.ZX_GEAR == 0.0) {
-                data.skip = true;
+
+            if ((afrAnalyzerSettings.maxAfrEnabled) && (data.LLC_AFR > afrAnalyzerSettings.maxAfr)) {
+                // dont need to do this
+                a.setSkip(true);
+                logger.debug("filtering out afr value, {} > max {}, tps:{} time:{}", data.LLC_AFR, afrAnalyzerSettings.maxAfr, data.ZX_TPS, data.Time);
+            }
+            if ((afrAnalyzerSettings.minAfrEnabled) && (data.LLC_AFR < afrAnalyzerSettings.minAfr)) {
+                a.setSkip(true);
+                logger.trace("filtering out afr value, {} < max {}, tps:{} time:{}", data.LLC_AFR, afrAnalyzerSettings.minAfr, data.ZX_TPS, data.Time);
+            } else if ((afrAnalyzerSettings.lowRpmEnabled) && (data.ZX_RPM < afrAnalyzerSettings.lowRpm)) {
+                a.setSkip(true);
+                logger.trace("filtering out afr {} value,RPM {} < {}", data.getLLC_AFR(), data.getZX_RPM(), afrAnalyzerSettings.lowRpm);
+            } else if ((afrAnalyzerSettings.neutralEnabled) && (data.ZX_GEAR == 0.0)) {
+                a.setSkip(true);
                 logger.trace("filtering out afr {} value, gear is 0(neutral)", data.LLC_AFR);
-            } else if ((data.ZX_GEAR != 1.0) && (data.ZX_GEAR != 2.0) && (data.ZX_GEAR != 3.0) && (data.ZX_GEAR != 4.0) && (data.ZX_GEAR != 5.0) && (data.ZX_GEAR != 6.0)) {
-                data.skip = true;
-                logger.trace("filtering out afr {} value, gear {} is rubbish, time: {}", data.LLC_AFR, data.ZX_GEAR, data.Time);
             } else if (findIndex(rpmArray, data.ZX_RPM, 0.25D) == null) {
-                data.skip = true;
+                a.setSkip(true);
                 logger.trace("filtering out afr {} value, rpm {} is outside tolerance {}, time: {}", data.LLC_AFR, data.ZX_RPM, 0.25D, data.Time);
-            } else if (gear[0] > prevGear[0]) {
-                //println "upshift from " + prevGear + " to " + gear
+            } else if ((afrAnalyzerSettings.quickshiftEnabled) && (gear[0] > prevGear[0])) {
                 // filter out to prev values
-                dataList.get(i[0] - 2).skip = true;
-                dataList.get(i[0] - 1).skip = true;
-                //println "Filtering out: " + dataList.get(i - 2).lcc_afr + " " + dataList.get(i - 1).lcc_afr
+                dataList.get(i[0] - 2).setSkip(true);
+                dataList.get(i[0] - 1).setSkip(true);
+                a.setSkip(true);
                 logger.trace("filtering out afr:{} afr:{} time:{} due to upshift", dataList.get(i[0] - 2).LLC_AFR, dataList.get(i[0] - 1).LLC_AFR, data.Time);
+            } else {
+                retList.add(a);
             }
 
             prevGear[0] = gear[0];
             i[0]++;
         });
 
-        return dataList;
+        return retList;
     }
 
 
@@ -267,7 +247,7 @@ public class AutoTuneService {
         }
 
         afrValues.forEach(value -> {
-            if (!value.skip) {
+            if (!value.isSkip()) {
                 // find tps index
                 Integer tpsInd = findIndex(tpsArray, value.getZX_TPS());
                 Integer rpmInd = findIndex(rpmArray, value.getZX_RPM());
@@ -309,7 +289,6 @@ public class AutoTuneService {
     public void dumpAfrValues(List<AFRValue> afrValues) {
         afrValues.forEach(value -> {
             //time rpm afr gear
-            //System.out.println(value.Time + " " + value.ZX_RPM + " " + value.getLLC_AFR() + value.ZX_GEAR);
             if (value.ZX_RPM >= 13500.0) {
                 System.out.print(ConsoleColors.RED_BACKGROUND);
             }
@@ -324,34 +303,6 @@ public class AutoTuneService {
             if (value.ZX_RPM >= 13500.0) {
                 System.out.print(ConsoleColors.RESET);
             }
-
-
         });
-
-    }
-
-    public void process() throws IOException {
-        List<AFRValue> rawAfrValues = null;
-        List<AFRValue> targetAfrValues = null;
-
-        if (!afrFile.isEmpty()) {
-            rawAfrValues = readAfrFile(afrFile);
-        }
-
-        //dumpAfrValues(rawAfrValues);
-
-        /*
-        if (!targetAfrFile.isEmpty()) {
-            targetAfrValues = readAfrFile(targetAfrFile);
-        }
-        */
-        AdjAFRValue[][] origMapArray = convert2Map(rawAfrValues);
-
-        // filter out irellevant data
-        List<AFRValue> filteredAFRValues = filter(rawAfrValues);
-
-        // convert to maparray
-        AdjAFRValue[][] filteredMapArray = convert2Map(filteredAFRValues);
-
     }
 }

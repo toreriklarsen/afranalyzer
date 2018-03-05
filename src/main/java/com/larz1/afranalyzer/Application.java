@@ -52,7 +52,7 @@ public class Application implements CommandLineRunner {
     public static void main(String[] args) throws Exception {
         //SpringApplication.run(Application.class, args);
         ConfigurableApplicationContext ctx = new SpringApplicationBuilder(Application.class)
-                .headless(false).run(args);
+                .headless(false).web(false).run(args);
 
         EventQueue.invokeLater(() -> {
             AutoTuneTable ex = ctx.getBean(AutoTuneTable.class);
