@@ -13,6 +13,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.print.PrinterException;
+import java.io.File;
 import java.io.IOException;
 import java.math.RoundingMode;
 import java.text.MessageFormat;
@@ -41,19 +42,35 @@ public class AutoTuneTable extends JFrame {
     //private AfrModel afrModel;
     @Autowired
     private AutoTuneService autoTuneService;
-    @Autowired
+    //@Autowired
     private AfrModel afrModel;
+    private AfrModel filteredAfrModel;
+    private AfrModel targetAfrModel;
+    private AfrModel compAfrModel;
+
 
     /* UI Components */
+    private JFileChooser afrFileChooser = new JFileChooser();
     private JButton afrLoadButton;
+    private JButton afrFileSelectButton;
     private JPanel contentPane;
     private JLabel afrLabel;
     private JTable afrTable;
-    private JScrollPane scroll;
+    private JTable filteredAfrTable;
+    private JTable targetAfrTable;
+    private JTable compAfrTable;
+
+    private JScrollPane afrTableScroll;
+    private JScrollPane filteredAfrTableScroll;
+    private JScrollPane targetAfrTableScroll;
+    private JScrollPane compAfrTableScroll;
+
     private JCheckBox showPrintDialogBox;
     private JCheckBox interactiveBox;
     private JCheckBox fitWidthBox;
     private JButton printButton;
+
+    private JTabbedPane tabbedPane;
 
 
     /* Protected so that they can be modified/disabled by subclasses */
@@ -62,44 +79,72 @@ public class AutoTuneTable extends JFrame {
     protected JTextField headerField;
     protected JTextField footerField;
 
+    List<AFRValue> afrValues;
 
     private void loadRawData() {
         logger.debug("load raw data");
         try {
-            List<AFRValue> afrValues = autoTuneService.readAfrFile();
-            AdjAFRValue[][] rawMapArray  = autoTuneService.convert2Map(afrValues);
-            afrModel.setFilteredMapArray(rawMapArray);
-        } catch (IOException ioe) {
+            AdjAFRValue[][] targetMapArray = autoTuneService.readTargetAfrFile();
+            autoTuneService.print(AutoTuneService.PRINT.AFR, targetMapArray, "Target");
+            targetAfrModel.setMapArray(targetMapArray);
 
+            if ((afrValues == null) || (afrValues.isEmpty())) {
+                afrValues = autoTuneService.readAfrFile();
+            }
+            AdjAFRValue[][] rawMapArray = autoTuneService.convert2Map(afrValues);
+            autoTuneService.print(AutoTuneService.PRINT.AFR, rawMapArray, "Raw");
+            afrModel.setMapArray(rawMapArray);
+
+            AdjAFRValue[][] filteredMapArray = autoTuneService.convert2Map(autoTuneService.filter(afrValues));
+            autoTuneService.print(AutoTuneService.PRINT.AFR, filteredMapArray, "Filtered");
+            filteredAfrModel.setMapArray(filteredMapArray);
+
+            // calculate the compensation
+            AdjAFRValue[][] compMap = autoTuneService.calculateCompensation(filteredMapArray, targetMapArray);
+            autoTuneService.print(AutoTuneService.PRINT.AFR, compMap, "Compensation");
+            compAfrModel.setMapArray(compMap);
+
+        } catch (IOException ioe) {
+            // Todo NBNBNBNBNB
         }
     }
 
     /**
      * Constructs an instance of the demo.
      */
-    @Autowired
-    public AutoTuneTable(AfrModel afrModel) {
+    public AutoTuneTable() {
         super("AFRanalyzer 1.0");
 
-        afrLoadButton = new JButton("load file");
+        afrLoadButton = new JButton("load afr file");
         afrLoadButton.addActionListener(ae -> loadRawData());
+
+        afrFileSelectButton = new JButton("select afr file");
+        afrFileSelectButton.addActionListener(ae -> selectAfrFile());
+        afrFileChooser = new JFileChooser(new File(System.getProperty("user.dir")));
 
         afrLabel = new JLabel("AFRanalyzer 1.0");
         afrLabel.setFont(new Font("Dialog", Font.BOLD, 16));
 
+        afrModel = new AfrModel();
+        filteredAfrModel = new AfrModel();
+        targetAfrModel = new AfrModel();
+        compAfrModel = new AfrModel();
+
         afrTable = createTable(afrModel);
-        afrTable.setFillsViewportHeight(true);
-        afrTable.setRowHeight(24);
+        filteredAfrTable = createTable(filteredAfrModel);
+        targetAfrTable = createTable(targetAfrModel);
+        compAfrTable = createTable(compAfrModel, true);
 
-        for (int i = 1; i <= 13; i++) {
-            afrTable.getColumn("" + (i - 1) * 1000).setCellRenderer(createSubstDouble2DecimalRenderer());
-        }
-        afrTable.getColumn("12500").setCellRenderer(createSubstDouble2DecimalRenderer());
-        afrTable.getColumn("13000").setCellRenderer(createSubstDouble2DecimalRenderer());
-        afrTable.getColumn("13500").setCellRenderer(createSubstDouble2DecimalRenderer());
-        afrTable.getColumn("14000").setCellRenderer(createSubstDouble2DecimalRenderer());
+        afrTableScroll = new JScrollPane(afrTable);
+        filteredAfrTableScroll = new JScrollPane(filteredAfrTable);
+        targetAfrTableScroll = new JScrollPane(targetAfrTable);
+        compAfrTableScroll = new JScrollPane(compAfrTable);
 
-        scroll = new JScrollPane(afrTable);
+        tabbedPane = new JTabbedPane();
+        tabbedPane.addTab("Raw afr file", afrTableScroll);
+        tabbedPane.addTab("Filtered afr file", filteredAfrTableScroll);
+        tabbedPane.addTab("Target afr file", targetAfrTableScroll);
+        tabbedPane.addTab("Afr compensation (%)", compAfrTableScroll);
 
         String tooltipText;
 
@@ -179,8 +224,25 @@ public class AutoTuneTable extends JFrame {
         setContentPane(contentPane);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(1000, 500);
+        setSize(1000, 600);
         setLocationRelativeTo(null);
+    }
+
+    private void selectAfrFile() {
+        File file;
+
+        int rVal = afrFileChooser.showDialog(AutoTuneTable.this, "WWW");
+        if (rVal == JFileChooser.APPROVE_OPTION) {
+            try {
+                file = afrFileChooser.getSelectedFile();
+                this.afrValues = autoTuneService.readAfrFile(file);
+                logger.debug("Opening afr file: {} ", file.getName());
+            } catch (IOException ioe) {
+                logger.warn("Error opening afr file");
+            }
+        } else {
+            logger.debug("Cancelled by user.");
+        }
     }
 
     /**
@@ -191,7 +253,7 @@ public class AutoTuneTable extends JFrame {
      */
     private void addComponentsToContentPane() {
         JPanel bottomPanel = new JPanel();
-        bottomPanel.setBorder(BorderFactory.createTitledBorder("Printing"));
+        bottomPanel.setBorder(BorderFactory.createTitledBorder("Filter"));
 
         GroupLayout bottomPanelLayout = new GroupLayout(bottomPanel);
         bottomPanel.setLayout(bottomPanelLayout);
@@ -242,8 +304,9 @@ public class AutoTuneTable extends JFrame {
                         .addGroup(layout.createSequentialGroup()
                                 .addContainerGap()
                                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(scroll, GroupLayout.DEFAULT_SIZE, 486, Short.MAX_VALUE)
+                                        .addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE, 486, Short.MAX_VALUE)
                                         //.addComponent(afrLabel)
+                                        .addComponent(afrFileSelectButton)
                                         .addComponent(afrLoadButton)
                                         .addComponent(bottomPanel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                                 .addContainerGap())
@@ -253,9 +316,10 @@ public class AutoTuneTable extends JFrame {
                         .addGroup(layout.createSequentialGroup()
                                 .addContainerGap()
                                 //.addComponent(afrLabel)
+                                .addComponent(afrFileSelectButton)
                                 .addComponent(afrLoadButton)
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(scroll, GroupLayout.DEFAULT_SIZE, 262, Short.MAX_VALUE)
+                                .addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE, 262, Short.MAX_VALUE)
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(bottomPanel, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
                                 .addContainerGap())
@@ -271,13 +335,47 @@ public class AutoTuneTable extends JFrame {
      * subclass that overrides {@code getPrintable} to return a
      * custom {@code Printable} implementation.
      */
+
     protected JTable createTable(TableModel model) {
-        return new JTable(model);
+        return createTable(model, false);
+    }
+
+    protected JTable createTable(TableModel model, Boolean color) {
+        JTable jt = new JTable(model);
+        jt.setFillsViewportHeight(true);
+        jt.setRowHeight(24);
+
+        for (int i = 1; i <= 13; i++) {
+            if (color) {
+                jt.getColumn("" + (i - 1) * 1000).setCellRenderer(createColoredSubstDouble2DecimalRenderer());
+            } else {
+                jt.getColumn("" + (i - 1) * 1000).setCellRenderer(createSubstDouble2DecimalRenderer());
+            }
+        }
+        if (color) {
+            jt.getColumn("12500").setCellRenderer(createColoredSubstDouble2DecimalRenderer());
+            jt.getColumn("13000").setCellRenderer(createColoredSubstDouble2DecimalRenderer());
+            jt.getColumn("13500").setCellRenderer(createColoredSubstDouble2DecimalRenderer());
+            jt.getColumn("14000").setCellRenderer(createColoredSubstDouble2DecimalRenderer());
+        } else {
+            jt.getColumn("12500").setCellRenderer(createSubstDouble2DecimalRenderer());
+            jt.getColumn("13000").setCellRenderer(createSubstDouble2DecimalRenderer());
+            jt.getColumn("13500").setCellRenderer(createSubstDouble2DecimalRenderer());
+            jt.getColumn("14000").setCellRenderer(createSubstDouble2DecimalRenderer());
+        }
+
+
+        return jt;
     }
 
     protected TableCellRenderer createSubstDouble2DecimalRenderer() {
         return new SubstDouble2DecimalRenderer(1);
     }
+
+    protected TableCellRenderer createColoredSubstDouble2DecimalRenderer() {
+        return new ColoredSubstDouble2DecimalRenderer(1);
+    }
+
 
     /**
      * Print the grades table.
@@ -338,45 +436,13 @@ public class AutoTuneTable extends JFrame {
         }
     }
 
-    /**
-     * Start the application.
-     */
-    /*
-    public static void main(final String[] args) {
-
-
-        ConfigurableApplicationContext ctx = new SpringApplicationBuilder(AutoTuneTable.class)
-                .headless(false).run(args);
-
-        EventQueue.invokeLater(() -> {
-            AutoTuneTable ex = ctx.getBean(AutoTuneTable.class);
-            ex.setVisible(true);
-        });
-*/
-
-    /* Schedule for the GUI to be created and shown on the EDT */
-
-        /*
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                UIManager.put("swing.boldMetal", false);
-                try {
-                    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-                } catch (Exception e) {
-                }
-                new TablePrintDemo1().setVisible(true);
-            }
-        });
-        */
-    //}
-
 
     protected static class SubstDouble2DecimalRenderer extends DefaultTableCellRenderer {
 
         private static final long serialVersionUID = 1L;
         private int precision = 0;
-        private Number numberValue;
-        private NumberFormat nf;
+        protected Number numberValue;
+        protected NumberFormat nf;
 
         public SubstDouble2DecimalRenderer(int p_precision) {
             super();
@@ -404,6 +470,43 @@ public class AutoTuneTable extends JFrame {
                 value = nf.format(numberValue.doubleValue());
             }
             super.setValue(value);
+        }
+    }
+
+    protected static class ColoredSubstDouble2DecimalRenderer extends SubstDouble2DecimalRenderer {
+        public ColoredSubstDouble2DecimalRenderer(int p_precision) {
+            super(p_precision);
+        }
+
+        @Override
+        public void setValue(Object value) {
+            if ((value != null) && (value instanceof Number)) {
+                numberValue = (Number) value;
+                value = nf.format(numberValue.doubleValue());
+                setBackground(getCellColor(new Double((String)value)));
+            }
+            super.setValue(value);
+        }
+
+        private Color getCellColor(double value) {
+            value = value / 100;
+
+            // NB todo move
+            double SETTING_MAXTUNE_PRECENTAGE = 0.1;
+
+            if (value > SETTING_MAXTUNE_PRECENTAGE) {
+                return new Color(255, 55, 55);
+            } else if (value > 0.1 * SETTING_MAXTUNE_PRECENTAGE) {
+                int greenvalue = (int) ((SETTING_MAXTUNE_PRECENTAGE - value) / SETTING_MAXTUNE_PRECENTAGE * 255);
+                return new Color(255, greenvalue, 0);
+            } else if ((value <= 0.1 * SETTING_MAXTUNE_PRECENTAGE) && (value >= -0.1 * SETTING_MAXTUNE_PRECENTAGE)) {
+                return Color.white;
+            } else if ((value < -0.1 * SETTING_MAXTUNE_PRECENTAGE) && (value > -SETTING_MAXTUNE_PRECENTAGE)) {
+                int greenvalue = (int) ((SETTING_MAXTUNE_PRECENTAGE + value) / SETTING_MAXTUNE_PRECENTAGE * 255);
+                return new Color(0, greenvalue, 255);
+            } else {
+                return new Color(0, 0, 255);
+            }
         }
     }
 }

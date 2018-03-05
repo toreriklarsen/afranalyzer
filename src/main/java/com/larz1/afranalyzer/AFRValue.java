@@ -19,6 +19,12 @@ public class AFRValue {
         this.LLC_AFR = LLC_AFR;
     }
 
+    public AFRValue(double ZX_RPM, double ZX_TPS, double LLC_AFR) {
+        this.ZX_RPM = ZX_RPM;
+        this.ZX_TPS = ZX_TPS;
+        this.LLC_AFR = LLC_AFR;
+    }
+
     public double getTime() {
         return Time;
     }

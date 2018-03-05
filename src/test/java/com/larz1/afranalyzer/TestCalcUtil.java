@@ -74,7 +74,11 @@ public class TestCalcUtil {
     @Test
     void testCalculateAverage() {
         List<AFRValue> ali = new LinkedList<>();
-        assertEquals(0.0d, CalcUtil.calculateAverage(ali));
+        ali.add(new AFRValue(1.0D, 1000D, 50D, 1D, 2.5D));
+        ali.add(new AFRValue(2.0D, 1000D, 50D, 1D, 2.5D));
+        ali.add(new AFRValue(3.0D, 1000D, 50D, 1D, 2.5D));
+
+        assertEquals(2.5d, CalcUtil.calculateAverage(ali));
     }
 
     @Test

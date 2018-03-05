@@ -1,43 +1,27 @@
 package com.larz1.afranalyzer;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
-import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableModel;
-import java.io.IOException;
-import java.util.List;
 
-@Component
+//@Component
+//@Scope("prototype")
 class AfrModel extends AbstractTableModel {
+    private static final Logger logger = LoggerFactory
+            .getLogger(AfrModel.class);
 
-    AdjAFRValue[][] filteredMapArray = null;
+    final static int MAX_COL = 18;
+    final static int MAX_ROW = 13;
+    AdjAFRValue[][] mapArray;
 
-    @Autowired
-    public AfrModel(AutoTuneService autoTuneService) {
-        /*
-        try {
-            if (autoTuneService != null) {
-                List<AFRValue> afrValues = autoTuneService.readAfrFile();
-                autoTuneService.print(AutoTuneService.PRINT.AFR, autoTuneService.convert2Map(afrValues));
-                autoTuneService.print(AutoTuneService.PRINT.COUNT, autoTuneService.convert2Map(afrValues));
-
-                List<AFRValue> filteredAFRValues = autoTuneService.filter(afrValues);
-
-                // convert to maparray
-                filteredMapArray = autoTuneService.convert2Map(filteredAFRValues);
-                autoTuneService.print(AutoTuneService.PRINT.AFR, filteredMapArray);
-                autoTuneService.print(AutoTuneService.PRINT.COUNT, filteredMapArray);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        */
+    public AfrModel() {
     }
 
-    public void setFilteredMapArray(AdjAFRValue[][] filteredMapArray) {
-        this.filteredMapArray = filteredMapArray;
+    public void setMapArray(AdjAFRValue[][] mapArray) {
+        this.mapArray = mapArray;
         fireTableDataChanged();
 
     }
@@ -48,23 +32,24 @@ class AfrModel extends AbstractTableModel {
 
     public Class<?> getColumnClass(int col) {
         if (col == 0) return Integer.class;
-        if ((col > 0) && (col < 18)) return Double.class;
+        if ((col > 0) && (col < MAX_COL)) return Double.class;
 
         throw new AssertionError("invalid column:" + col);
     }
 
     public int getRowCount() {
-        return 13;
+        return MAX_ROW;
     }
 
     public int getColumnCount() {
-        return 18;
+        return MAX_COL;
     }
 
     public String getColumnName(int col) {
         if (col == 0) {
-            return "TPS";
+            return "TPS/RPM";
         }
+
         if ((col > 0) && (col <= 13)) {
             return "" + (col - 1) * 1000;
         }
@@ -78,6 +63,7 @@ class AfrModel extends AbstractTableModel {
                 return "13500";
             case 17:
                 return "14000";
+
         }
 
         throw new AssertionError("invalid column:" + col);
@@ -88,7 +74,9 @@ class AfrModel extends AbstractTableModel {
             return AutoTuneService.tpsArray[row];
         }
 
-        if (filteredMapArray == null) return new Integer(0);
-        return filteredMapArray[row][col - 1].getAverage();
+        if (mapArray == null) return new Integer(0);
+        logger.trace("getValueAt() row {} col {}", row, col);
+        logger.trace("getValueAt() value {}", mapArray[row][col - 1].getAverage());
+        return mapArray[row][col - 1].getAverage();
     }
 }

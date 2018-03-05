@@ -8,7 +8,15 @@ public class AdjAFRValue {
     private int count = 0;
     List<AFRValue> afrList = new LinkedList<>();
 
-    void incAverage(double newVal) {
+    public AdjAFRValue() {
+    }
+
+    public AdjAFRValue(double average) {
+        this.average = average;
+        count = 1;
+    }
+
+    private void incAverage(double newVal) {
         average += (newVal - average) / (double) ++count;
     }
 
@@ -22,5 +30,6 @@ public class AdjAFRValue {
 
     public void addAFRValue(AFRValue value) {
         afrList.add(value);
+        incAverage(value.getLLC_AFR());
     }
 }

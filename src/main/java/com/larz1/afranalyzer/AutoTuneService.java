@@ -3,11 +3,11 @@ package com.larz1.afranalyzer;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
+import com.fasterxml.jackson.dataformat.csv.CsvParser;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -31,7 +31,7 @@ public class AutoTuneService {
         COUNT
     }
 
-    static double[]  tpsArray = {0.0, 0.8, 2.3, 4.7, 7.8, 10.2, 14.8, 20.3, 29.7, 39.8, 50.0, 75.0, 100.0};
+    static double[] tpsArray = {0.0, 0.8, 2.3, 4.7, 7.8, 10.2, 14.8, 20.3, 29.7, 39.8, 50.0, 75.0, 100.0};
     //double[] tpsArray = {0.0, 2.0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.9, 45.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0};
     static double[] rpmArray = {0.0, 1000.0, 2000.0, 3000.0, 4000.0, 5000.0, 6000.0, 7000.0, 8000.0, 9000.0, 10000.0, 11000.0, 12000.0, 12500.0, 13000.0, 13500.0, 14000.0};
 
@@ -65,7 +65,7 @@ public class AutoTuneService {
     public AutoTuneService() {
     }
 
-    public void print(PRINT print, AdjAFRValue[][] mArr) {
+    public void print(PRINT print, AdjAFRValue[][] mArr, String header) {
         Boolean[][] bArr = new Boolean[tpsArray.length][rpmArray.length];
         for (int i = 0; i < tpsArray.length; i++) {
             for (int j = 0; j < rpmArray.length; j++) {
@@ -118,6 +118,7 @@ public class AutoTuneService {
         System.out.println();
         System.out.print("      ");
 */
+        System.out.println("********** " + header + " **********");
         System.out.print("      ");
         System.out.print(ConsoleColors.GREEN);
         for (int j = 0; j < rpmArray.length; j++) {
@@ -157,10 +158,15 @@ public class AutoTuneService {
 
     // todo tmp
     public List<AFRValue> readAfrFile() throws IOException {
-        return readAfrFile("data/almeria-before.csv");
+        return readAfrFile("data/brno.csv");
     }
 
-    public List<AFRValue> readAfrFile(String file) throws IOException {
+    public List<AFRValue> readAfrFile(String fileName) throws IOException {
+        File file = new File(fileName);
+        return readAfrFile(file);
+    }
+
+    public List<AFRValue> readAfrFile(File file) throws IOException {
         logger.trace("readAfrFile {}", file);
 
         CsvSchema schema = CsvSchema.builder()
@@ -178,7 +184,7 @@ public class AutoTuneService {
 
         // read from file
         LinkedList<AFRValue> afrValues = new LinkedList<AFRValue>();
-        Reader reader = new FileReader(new File(file));
+        Reader reader = new FileReader(file);
         MappingIterator<AFRValue> mi = oReader.readValues(reader);
         while (mi.hasNext()) {
             afrValues.add(mi.next());
@@ -187,8 +193,30 @@ public class AutoTuneService {
         return afrValues;
     }
 
-    public void calculateTarget() {
+    // todo tmp
+    public AdjAFRValue[][] readTargetAfrFile() throws IOException {
+        return readTargetAfrFile("data/zx10r-tel01-Target.csv");
+    }
 
+    public AdjAFRValue[][] readTargetAfrFile(String file) throws IOException {
+        logger.trace("readTargetAfrFile {}", file);
+
+        File csvFile = new File(file); // or from String, URL etc
+        CsvMapper mapper = new CsvMapper();
+        mapper.enable(CsvParser.Feature.WRAP_AS_ARRAY);
+        String[][] rows = mapper.readValue(csvFile, String[][].class);
+
+        AdjAFRValue[][] mArr = new AdjAFRValue[tpsArray.length][rpmArray.length];
+        for (int i = 1; i < tpsArray.length; i++) {
+            for (int j = 0; j < rpmArray.length; j++) {
+                mArr[i - 1][j] = new AdjAFRValue(new Double(rows[i][j + 1]));
+            }
+        }
+        for (int j = 0; j < rpmArray.length; j++) {
+            mArr[12][j] = new AdjAFRValue(new Double(rows[13][j + 1]));
+        }
+
+        return mArr;
     }
 
     List<AFRValue> filter(List<AFRValue> dataList) {
@@ -197,14 +225,8 @@ public class AutoTuneService {
         final int[] i = {0};
         dataList.forEach(data -> {
             gear[0] = (int) data.ZX_GEAR;
-            if (gear[0] > prevGear[0]) {
-                //println "upshift from " + prevGear + " to " + gear
-                // filter out to prev values
-                dataList.get(i[0] - 2).skip = true;
-                dataList.get(i[0] - 1).skip = true;
-                //println "Filtering out: " + dataList.get(i - 2).lcc_afr + " " + dataList.get(i - 1).lcc_afr
-                logger.trace("filtering out afr:{} afr:{} time:{} due to upshift", dataList.get(i[0] - 2).LLC_AFR, dataList.get(i[0] - 1).LLC_AFR, data.Time);
-            } else if ((data.LLC_AFR < minAfr) || (data.LLC_AFR > maxAfr)) {
+
+            if ((data.LLC_AFR < minAfr) || (data.LLC_AFR > maxAfr)) {
                 data.skip = true;
                 logger.trace("filtering out afr {} value out of range, tps:{} time:{}", data.LLC_AFR, data.ZX_TPS, data.Time);
             } else if (data.ZX_RPM < 500) {
@@ -219,6 +241,13 @@ public class AutoTuneService {
             } else if (findIndex(rpmArray, data.ZX_RPM, 0.25D) == null) {
                 data.skip = true;
                 logger.trace("filtering out afr {} value, rpm {} is outside tolerance {}, time: {}", data.LLC_AFR, data.ZX_RPM, 0.25D, data.Time);
+            } else if (gear[0] > prevGear[0]) {
+                //println "upshift from " + prevGear + " to " + gear
+                // filter out to prev values
+                dataList.get(i[0] - 2).skip = true;
+                dataList.get(i[0] - 1).skip = true;
+                //println "Filtering out: " + dataList.get(i - 2).lcc_afr + " " + dataList.get(i - 1).lcc_afr
+                logger.trace("filtering out afr:{} afr:{} time:{} due to upshift", dataList.get(i[0] - 2).LLC_AFR, dataList.get(i[0] - 1).LLC_AFR, data.Time);
             }
 
             prevGear[0] = gear[0];
@@ -242,13 +271,37 @@ public class AutoTuneService {
                 // find tps index
                 Integer tpsInd = findIndex(tpsArray, value.getZX_TPS());
                 Integer rpmInd = findIndex(rpmArray, value.getZX_RPM());
+                if ((tpsInd == null) || (rpmInd == null)) {
+                    logger.debug("got taken out");
+                }
                 if (mArr[tpsInd][rpmInd] == null) {
                     mArr[tpsInd][rpmInd] = new AdjAFRValue();
                 }
-                mArr[tpsInd][rpmInd].incAverage(value.getLLC_AFR());
                 mArr[tpsInd][rpmInd].addAFRValue(value);
             }
         });
+
+        return mArr;
+    }
+
+    AdjAFRValue[][] calculateCompensation(AdjAFRValue[][] filteredMap, AdjAFRValue[][] targetMap) {
+        AdjAFRValue[][] mArr = new AdjAFRValue[tpsArray.length][rpmArray.length];
+
+        for (int i = 0; i < tpsArray.length; i++) {
+            for (int j = 0; j < rpmArray.length; j++) {
+                if ((filteredMap[i][j].getAverage() == 0.0) || (targetMap[i][j].getAverage() == 0.0)) {
+                    mArr[i][j] = new AdjAFRValue(0.0);
+                } else {
+                    Double diff = (filteredMap[i][j].getAverage() / targetMap[i][j].getAverage()) - 1;
+                    if (diff == -1) {
+                        mArr[i][j] = new AdjAFRValue(0.0);
+                    } else {
+                        // nb rounding
+                        mArr[i][j] = new AdjAFRValue(diff * 100);
+                    }
+                }
+            }
+        }
 
         return mArr;
     }
@@ -300,14 +353,5 @@ public class AutoTuneService {
         // convert to maparray
         AdjAFRValue[][] filteredMapArray = convert2Map(filteredAFRValues);
 
-        // calculate target values
-        calculateTarget();
-
-        if ("true".equals(printAfr)) {
-            //printAfr(origMapArray);
-            print(PRINT.AFR, origMapArray);
-            print(PRINT.AFR, filteredMapArray);
-            print(PRINT.COUNT, filteredMapArray);
-        }
     }
 }
