@@ -114,4 +114,34 @@ public class CalcUtil {
 
         return i;
     }
+
+    public static double maxFlux(double engineVolume, int maxRpm) {
+        return (engineVolume/2) * (maxRpm / 60);
+    }
+
+    public static double pipeVolume(double pipeCrossSection, double pipeLength, int ncylinders) {
+        return pipeCrossSection * ncylinders * pipeLength;
+    }
+
+    public static double minFlux(double pipeVolume, int maxEgo) {
+        return (pipeVolume * 1000.0) / maxEgo;
+    }
+
+    /**
+     * Calculate the exhaust gas offset (ego)
+     *
+     * @param maxEgo - in ms
+     * @param maxFlux
+     * @param minFlux
+     * @param pipeVolume - in cc
+     * @param rpm - current rpm
+     * @param tps - current tps 0 - 1
+     * @return Exhaust gas offset in ms
+     */
+    public static double ego(int maxEgo, double maxFlux, double minFlux, double pipeVolume, double rpm, double tps) {
+        if ((rpm < 500) || (tps < 0.1)) return 0.0;
+        double partialFlux = maxFlux * (rpm / maxEgo) * (tps / 100.0);
+
+        return pipeVolume * 1000.0 / (partialFlux + minFlux);
+    }
 }

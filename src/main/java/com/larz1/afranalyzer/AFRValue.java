@@ -82,4 +82,16 @@ public class AFRValue {
     public void setSkip(boolean skip) {
         this.skip = skip;
     }
+
+    @Override
+    public String toString() {
+        return "AFRValue{" +
+                "Time=" + Time +
+                ", ZX_RPM=" + ZX_RPM +
+                ", ZX_TPS=" + ZX_TPS +
+                ", ZX_GEAR=" + ZX_GEAR +
+                ", LLC_AFR=" + LLC_AFR +
+                ", skip=" + skip +
+                '}' +  '\n';
+    }
 }

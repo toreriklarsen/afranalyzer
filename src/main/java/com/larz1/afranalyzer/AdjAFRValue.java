@@ -32,4 +32,13 @@ public class AdjAFRValue {
         afrList.add(value);
         incAverage(value.getLLC_AFR());
     }
+
+    @Override
+    public String toString() {
+        return "AdjAFRValue{" +
+                "average=" + average +
+                ", count=" + count +
+                //", afrList=" + afrList +
+                '}';
+    }
 }

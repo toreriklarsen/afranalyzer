@@ -22,6 +22,19 @@ public class AfrAnalyzerSettings {
     @Value("${maxafr:15.0}")
     Double maxAfr;
 
+    @Value("${quickshiftenabled:false}")
+    Boolean quickshiftEnabled;
+
+    @Value("${neutralenabled:false}")
+    Boolean neutralEnabled;
+
+
+    // todo no gui
+    @Value("${maxtunepercentageabled:false}")
+    Boolean maxtunepercentageEnabled;
+    @Value("${maxtunepercentage:0.1}")
+    Double maxTunePercentage;
+
     @Value("${minectenabled:false}")
     Boolean minEctEnabled;
     @Value("${minect:80}")
@@ -32,16 +45,13 @@ public class AfrAnalyzerSettings {
     @Value("${lowrpm:500}")
     Integer lowRpm;
 
-    @Value("${neutralenabled:false}")
-    Boolean neutralEnabled;
 
+    // used for autotune
     @Value("${celltoleranceenabled:false}")
     Boolean cellToleranceEnabled;
     @Value("${cellTolerance:0.25}")
     Double cellTolerance;
 
-    @Value("${quickshiftenabled:false}")
-    Boolean quickshiftEnabled;
 
 
 

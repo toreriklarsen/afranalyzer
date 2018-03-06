@@ -12,6 +12,7 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 
 import javax.annotation.PostConstruct;
+import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 
@@ -50,6 +51,8 @@ public class Application implements CommandLineRunner {
     }
 
     public static void main(String[] args) throws Exception {
+        UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+
         //SpringApplication.run(Application.class, args);
         ConfigurableApplicationContext ctx = new SpringApplicationBuilder(Application.class)
                 .headless(false).web(false).run(args);

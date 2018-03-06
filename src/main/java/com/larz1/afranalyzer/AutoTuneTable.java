@@ -14,6 +14,7 @@ import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.awt.print.PrinterException;
 import java.io.File;
 import java.io.IOException;
@@ -52,6 +53,7 @@ public class AutoTuneTable extends JFrame {
     private AfrModel filteredAfrModel;
     private AfrModel targetAfrModel;
     private AfrModel compAfrModel;
+    private AfrModel egoModel;
 
 
     /* UI Components */
@@ -64,14 +66,16 @@ public class AutoTuneTable extends JFrame {
     private JTable filteredAfrTable;
     private JTable targetAfrTable;
     private JTable compAfrTable;
+    private JTable egoTable;
 
     private JScrollPane afrTableScroll;
     private JScrollPane filteredAfrTableScroll;
     private JScrollPane targetAfrTableScroll;
     private JScrollPane compAfrTableScroll;
+    private JScrollPane egoTableScroll;
 
-    private JCheckBox showPrintDialogBox;
-    private JCheckBox interactiveBox;
+    private JCheckBox quickShiftBox;
+    private JCheckBox neutralBox;
     private JCheckBox fitWidthBox;
     private JButton printButton;
 
@@ -111,6 +115,11 @@ public class AutoTuneTable extends JFrame {
             autoTuneService.print(AutoTuneService.PRINT.AFR, compMap, "Compensation");
             compAfrModel.setMapArray(compMap);
 
+            // calculate the compensation
+            AdjAFRValue[][] egoMap = autoTuneService.calculateEgo();
+            autoTuneService.print(AutoTuneService.PRINT.AFR, egoMap, "Ego");
+            egoModel.setMapArray(egoMap);
+
         } catch (IOException ioe) {
             // Todo NBNBNBNBNB
         }
@@ -139,22 +148,26 @@ public class AutoTuneTable extends JFrame {
         filteredAfrModel = new AfrModel();
         targetAfrModel = new AfrModel();
         compAfrModel = new AfrModel();
+        egoModel = new AfrModel();
 
         afrTable = createTable(afrModel);
         filteredAfrTable = createTable(filteredAfrModel);
         targetAfrTable = createTable(targetAfrModel);
         compAfrTable = createTable(compAfrModel, true);
+        egoTable = createTable(egoModel);
 
         afrTableScroll = new JScrollPane(afrTable);
         filteredAfrTableScroll = new JScrollPane(filteredAfrTable);
         targetAfrTableScroll = new JScrollPane(targetAfrTable);
         compAfrTableScroll = new JScrollPane(compAfrTable);
+        egoTableScroll = new JScrollPane(egoTable);
 
         tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Raw afr file", afrTableScroll);
         tabbedPane.addTab("Filtered afr file", filteredAfrTableScroll);
         tabbedPane.addTab("Target afr file", targetAfrTableScroll);
         tabbedPane.addTab("Afr compensation (%)", compAfrTableScroll);
+        tabbedPane.addTab("Ego (ms)", egoTableScroll);
 
         String tooltipText;
 
@@ -164,48 +177,27 @@ public class AutoTuneTable extends JFrame {
         maxAfrBox.setToolTipText(tooltipText);
         tooltipText = "Min AFR filter value";
         maxAfrField = new JTextField("" + afrAnalyzerSettings.maxAfr, 4);
+        maxAfrField.addActionListener(ae -> maxAfrChanged());
         maxAfrField.setToolTipText(tooltipText);
 
         tooltipText = "Min AFR filter";
-        minAfrBox = new JCheckBox("min Afr:", afrAnalyzerSettings.minAfrEnabled);
+        minAfrBox = new JCheckBox("Min Afr:", afrAnalyzerSettings.minAfrEnabled);
         minAfrBox.addActionListener(ae -> checkMinAfrFilter());
         minAfrBox.setToolTipText(tooltipText);
         tooltipText = "Min AFR filter value";
         minAfrField = new JTextField("" + afrAnalyzerSettings.minAfr);
         minAfrField.setToolTipText(tooltipText);
 
-        tooltipText = "Show the Print Dialog Before Printing";
-        showPrintDialogBox = new JCheckBox("Show print dialog", true);
-        showPrintDialogBox.setToolTipText(tooltipText);
-        showPrintDialogBox.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ae) {
-                if (!showPrintDialogBox.isSelected()) {
-                    JOptionPane.showMessageDialog(
-                            AutoTuneTable.this,
-                            "If the Print Dialog is not shown,"
-                                    + " the default printer is used.",
-                            "Printing Message",
-                            JOptionPane.INFORMATION_MESSAGE);
-                }
-            }
-        });
+        tooltipText = "Filter out values due to upshifting with quickshifter";
+        quickShiftBox = new JCheckBox("Quick shift filter", afrAnalyzerSettings.quickshiftEnabled);
+        quickShiftBox.setToolTipText(tooltipText);
+        quickShiftBox.addActionListener(ae -> quickShiftFilter());
 
 
-        tooltipText = "Keep the GUI Responsive and Show a Status Dialog During Printing";
-        interactiveBox = new JCheckBox("Interactive (Show status dialog)", true);
-        interactiveBox.setToolTipText(tooltipText);
-        interactiveBox.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ae) {
-                if (!interactiveBox.isSelected()) {
-                    JOptionPane.showMessageDialog(
-                            AutoTuneTable.this,
-                            "If non-interactive, the GUI is fully blocked"
-                                    + " during printing.",
-                            "Printing Message",
-                            JOptionPane.INFORMATION_MESSAGE);
-                }
-            }
-        });
+        tooltipText = "Filter out values when in neutral gear";
+        neutralBox = new JCheckBox("Neutral filter", true);
+        neutralBox.setToolTipText(tooltipText);
+        neutralBox.addActionListener(ae -> neutralFilter());
 
         tooltipText = "Shrink the Table to Fit the Entire Width on a Page";
         fitWidthBox = new JCheckBox("Fit width to printed page", true);
@@ -277,9 +269,9 @@ public class AutoTuneTable extends JFrame {
                                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                                 .addComponent(printButton))
                                         .addGroup(bottomPanelLayout.createSequentialGroup()
-                                                .addComponent(showPrintDialogBox)
+                                                .addComponent(quickShiftBox)
                                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                                .addComponent(interactiveBox)))
+                                                .addComponent(neutralBox)))
                                 .addContainerGap(GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         bottomPanelLayout.setVerticalGroup(
@@ -288,8 +280,8 @@ public class AutoTuneTable extends JFrame {
                                 .addGroup(bottomPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                                         .addComponent(maxAfrBox)
                                         .addComponent(maxAfrField, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(interactiveBox)
-                                        .addComponent(showPrintDialogBox))
+                                        .addComponent(neutralBox)
+                                        .addComponent(quickShiftBox))
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addGroup(bottomPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                                         .addComponent(minAfrBox)
@@ -343,7 +335,26 @@ public class AutoTuneTable extends JFrame {
     }
 
     protected JTable createTable(TableModel model, Boolean color) {
-        JTable jt = new JTable(model);
+        JTable jt = new JTable(model) {
+
+            //Implement table cell tool tips.
+            public String getToolTipText(MouseEvent e) {
+                String tip = null;
+                java.awt.Point p = e.getPoint();
+                int rowIndex = rowAtPoint(p);
+                int colIndex = columnAtPoint(p);
+
+                try {
+                    //tip = getValueAt(rowIndex, colIndex).toString();
+                    tip = ((AfrModel) getModel()).mapArray[rowIndex][colIndex-1].toString();
+                } catch (RuntimeException e1) {
+                    //catch null pointer exception if mouse is over an empty line
+                }
+
+                return tip;
+            }
+        };
+
         jt.setFillsViewportHeight(true);
         jt.setRowHeight(24);
 
@@ -402,8 +413,8 @@ public class AutoTuneTable extends JFrame {
         }
 
         boolean fitWidth = fitWidthBox.isSelected();
-        boolean showPrintDialog = showPrintDialogBox.isSelected();
-        boolean interactive = interactiveBox.isSelected();
+        boolean showPrintDialog = quickShiftBox.isSelected();
+        boolean interactive = neutralBox.isSelected();
 
         /* determine the print mode */
         JTable.PrintMode mode = fitWidth ? JTable.PrintMode.FIT_WIDTH
@@ -439,17 +450,36 @@ public class AutoTuneTable extends JFrame {
     }
 
     private void checkMaxAfrFilter() {
-        maxAfrField.setEnabled(maxAfrBox.isSelected());
+        //maxAfrField.setEnabled(maxAfrBox.isSelected());
         afrAnalyzerSettings.maxAfrEnabled = maxAfrBox.isSelected();
         // rerun filter, for now reload
         loadRawData();
     }
 
     private void checkMinAfrFilter() {
-        minAfrField.setEnabled(minAfrBox.isSelected());
+        //minAfrField.setEnabled(minAfrBox.isSelected());
         afrAnalyzerSettings.minAfrEnabled = minAfrBox.isSelected();
         // rerun filter, for now reload
         loadRawData();
+    }
+
+    private void quickShiftFilter() {
+        afrAnalyzerSettings.quickshiftEnabled = quickShiftBox.isSelected();
+        // rerun filter, for now reload
+        loadRawData();
+    }
+
+    private void neutralFilter() {
+        afrAnalyzerSettings.neutralEnabled = neutralBox.isSelected();
+        // rerun filter, for now reload
+        loadRawData();
+    }
+
+    private void maxAfrChanged() {
+        afrAnalyzerSettings.maxAfr = new Double(maxAfrField.getText());
+        if (maxAfrBox.isEnabled()) {
+            loadRawData();
+        }
     }
 
 
@@ -489,7 +519,7 @@ public class AutoTuneTable extends JFrame {
         }
     }
 
-    protected static class ColoredSubstDouble2DecimalRenderer extends SubstDouble2DecimalRenderer {
+    protected class ColoredSubstDouble2DecimalRenderer extends SubstDouble2DecimalRenderer {
         public ColoredSubstDouble2DecimalRenderer(int p_precision) {
             super(p_precision);
         }
@@ -499,29 +529,39 @@ public class AutoTuneTable extends JFrame {
             if ((value != null) && (value instanceof Number)) {
                 numberValue = (Number) value;
                 value = nf.format(numberValue.doubleValue());
-                setBackground(getCellColor(new Double((String) value)));
+                setBackground(getCellBackgroundColor(new Double((String) value)));
+                setForeground(getCellForegroundColor(new Double((String) value)));
             }
             super.setValue(value);
         }
 
-        private Color getCellColor(double value) {
+        private Color getCellBackgroundColor(double value) {
             value = value / 100;
-
-            // NB todo move
-            double SETTING_MAXTUNE_PRECENTAGE = 0.1;
-
-            if (value > SETTING_MAXTUNE_PRECENTAGE) {
-                return new Color(255, 55, 55);
-            } else if (value > 0.1 * SETTING_MAXTUNE_PRECENTAGE) {
-                int greenvalue = (int) ((SETTING_MAXTUNE_PRECENTAGE - value) / SETTING_MAXTUNE_PRECENTAGE * 255);
-                return new Color(255, greenvalue, 0);
-            } else if ((value <= 0.1 * SETTING_MAXTUNE_PRECENTAGE) && (value >= -0.1 * SETTING_MAXTUNE_PRECENTAGE)) {
+            if (value > afrAnalyzerSettings.maxTunePercentage) {
+                return new Color(255, 0, 0);
+            } else if (value > 0.1 * afrAnalyzerSettings.maxTunePercentage) {
+                int greenvalue = (int) ((afrAnalyzerSettings.maxTunePercentage - value) / afrAnalyzerSettings.maxTunePercentage * 255);
+                return new Color(255, greenvalue, greenvalue);
+            } else if ((value <= 0.1 * afrAnalyzerSettings.maxTunePercentage) && (value >= -0.1 * afrAnalyzerSettings.maxTunePercentage)) {
                 return Color.white;
-            } else if ((value < -0.1 * SETTING_MAXTUNE_PRECENTAGE) && (value > -SETTING_MAXTUNE_PRECENTAGE)) {
-                int greenvalue = (int) ((SETTING_MAXTUNE_PRECENTAGE + value) / SETTING_MAXTUNE_PRECENTAGE * 255);
+            } else if ((value < -0.1 * afrAnalyzerSettings.maxTunePercentage) && (value > -afrAnalyzerSettings.maxTunePercentage)) {
+                int greenvalue = (int) ((afrAnalyzerSettings.maxTunePercentage + value) / afrAnalyzerSettings.maxTunePercentage * 255);
                 return new Color(0, greenvalue, 255);
+
             } else {
                 return new Color(0, 0, 255);
+            }
+        }
+
+        private Color getCellForegroundColor(double value) {
+            value = value / 100;
+
+            if (value > afrAnalyzerSettings.maxTunePercentage) {
+                return Color.white;
+            } else if (value < (-afrAnalyzerSettings.maxTunePercentage)) {
+                return Color.white;
+            } else {
+                return Color.black;
             }
         }
     }

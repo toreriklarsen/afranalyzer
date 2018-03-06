@@ -79,4 +79,10 @@ class AfrModel extends AbstractTableModel {
         logger.trace("getValueAt() value {}", mapArray[row][col - 1].getAverage());
         return mapArray[row][col - 1].getAverage();
     }
+
+    public AdjAFRValue[][] getMapArray() {
+        return mapArray;
+    }
+
+
 }

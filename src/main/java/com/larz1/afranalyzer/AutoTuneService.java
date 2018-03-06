@@ -217,7 +217,7 @@ public class AutoTuneService {
             } else if ((afrAnalyzerSettings.neutralEnabled) && (data.ZX_GEAR == 0.0)) {
                 a.setSkip(true);
                 logger.trace("filtering out afr {} value, gear is 0(neutral)", data.LLC_AFR);
-            } else if (findIndex(rpmArray, data.ZX_RPM, 0.25D) == null) {
+            } else if ((afrAnalyzerSettings.cellToleranceEnabled) && (findIndex(rpmArray, data.ZX_RPM, 0.25D) == null)) {
                 a.setSkip(true);
                 logger.trace("filtering out afr {} value, rpm {} is outside tolerance {}, time: {}", data.LLC_AFR, data.ZX_RPM, 0.25D, data.Time);
             } else if ((afrAnalyzerSettings.quickshiftEnabled) && (gear[0] > prevGear[0])) {
@@ -280,6 +280,26 @@ public class AutoTuneService {
                         mArr[i][j] = new AdjAFRValue(diff * 100);
                     }
                 }
+            }
+        }
+
+        return mArr;
+    }
+
+    AdjAFRValue[][] calculateEgo() {
+        AdjAFRValue[][] mArr = new AdjAFRValue[tpsArray.length][rpmArray.length];
+
+        // todo fix in settings
+        double maxFLux = CalcUtil.maxFlux(998, 13550);
+        double pipeVolume = CalcUtil.pipeVolume(45.0, 953, 4);
+        double minFLux = CalcUtil.minFlux(pipeVolume, 250);
+
+
+        for (int i = 0; i < tpsArray.length; i++) {
+            for (int j = 0; j < rpmArray.length; j++) {
+                double ego = 0.0;
+                ego = CalcUtil.ego(250, maxFLux, minFLux, pipeVolume, rpmArray[j], tpsArray[i]);
+                mArr[i][j] = new AdjAFRValue(ego);
             }
         }
 

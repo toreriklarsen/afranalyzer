@@ -10,19 +10,20 @@
     * Tab comparing
     * Color coded cells and relevant areas
 * OK Read AFR target
-* Config fra fil, yml spring
+* OK Config fra fil, yml spring
 * Data browser m tabell. Mekanismer for
     * Mekanismer for å finne overrun, quickgearshift osv.
     * Rare verdier AFR, søk?
-* Exhaust gas speed compensation
+* Exhaust gas speed compensation, med egen tab for debug
+* Kompensere for EGO
 * Calculate autotune percent values
 * Verify afr cell averaging
 * Verify afr cell location, and should some be excluded?
 
 * Start app riktig, med main og table
 * Les data riktig fra service
-* Benytt AFRSettings
-* Lag panel for AFRSettings, interaktiv oppdatering ved on/off filter
+* OK Benytt AFRSettings
+* OK delvis Lag panel for AFRSettings, interaktiv oppdatering ved on/off filter
 * Test Copy Paste to Excel fra %compensation
 
 
