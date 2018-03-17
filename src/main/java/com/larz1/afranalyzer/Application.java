@@ -25,9 +25,6 @@ public class Application implements CommandLineRunner {
     private static final Logger logger = LoggerFactory
             .getLogger(Application.class);
 
-    // Simple example shows how a command line spring application can execute an
-    // injected bean service. Also demonstrates how you can use @Value to inject
-    // command line args ('--name=whatever') or application properties
     @Autowired
     private AutoTuneService autoTuneService;
 
@@ -42,18 +39,16 @@ public class Application implements CommandLineRunner {
 
 
     @Override
-    public void run(String... args) throws IOException {
+    public void run(String... args) {
         logger.trace("Current dir using System:" + System.getProperty("user.dir"));
-        //this.autoTuneService.process();
         if (args.length > 0 && args[0].equals("exitcode")) {
             throw new ExitException();
         }
     }
 
-    public static void main(String[] args) throws Exception {
-        UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+    public static void main(String[] args) {
+        //UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
 
-        //SpringApplication.run(Application.class, args);
         ConfigurableApplicationContext ctx = new SpringApplicationBuilder(Application.class)
                 .headless(false).web(false).run(args);
 
@@ -61,7 +56,5 @@ public class Application implements CommandLineRunner {
             AutoTuneTable ex = ctx.getBean(AutoTuneTable.class);
             ex.setVisible(true);
         });
-        int i = 1;
-        //SpringApplication.run(Application.class, args).close();
     }
 }

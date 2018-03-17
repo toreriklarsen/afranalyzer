@@ -7,48 +7,45 @@ import org.springframework.stereotype.Component;
 public class AfrAnalyzerSettings {
 
     @Value("${afr.file:data/almeria-before.csv}")
-    String afrFile;
+    public String afrFile;
 
     @Value("${targetafr.file:data/zx10r-tel01-Target.csv}")
-    String targetAfrFile;
+    public String targetAfrFile;
 
     @Value("${minafrenabled:false}")
-    Boolean minAfrEnabled;
+    public Boolean minAfrEnabled;
     @Value("${minafr:10.0}")
-    Double minAfr;
+    public Double minAfr;
 
     @Value("${maxafrenabled:false}")
-    Boolean maxAfrEnabled;
+    public Boolean maxAfrEnabled;
     @Value("${maxafr:15.0}")
-    Double maxAfr;
+    public Double maxAfr;
 
     @Value("${quickshiftenabled:false}")
-    Boolean quickshiftEnabled;
+    public Boolean quickshiftEnabled;
 
     @Value("${neutralenabled:false}")
-    Boolean neutralEnabled;
+    public Boolean neutralEnabled;
 
+    @Value("${minectenabled:false}")
+    public Boolean minEctEnabled;
+    @Value("${minect:80}")
+    public Integer minEct;
 
-    // todo no gui
+    @Value("${lowrpmenabled:false}")
+    public Boolean lowRpmEnabled;
+    @Value("${lowrpm:500}")
+    public Integer lowRpm;
+
+    // used for autotune
     @Value("${maxtunepercentageabled:false}")
-    Boolean maxtunepercentageEnabled;
+    public Boolean maxtunepercentageEnabled;
     @Value("${maxtunepercentage:0.1}")
     Double maxTunePercentage;
 
-    @Value("${minectenabled:false}")
-    Boolean minEctEnabled;
-    @Value("${minect:80}")
-    Integer minEct;
-
-    @Value("${lowrpmenabled:false}")
-    Boolean lowRpmEnabled;
-    @Value("${lowrpm:500}")
-    Integer lowRpm;
-
-
-    // used for autotune
     @Value("${celltoleranceenabled:false}")
-    Boolean cellToleranceEnabled;
+    public Boolean cellToleranceEnabled;
     @Value("${cellTolerance:0.25}")
     Double cellTolerance;
 

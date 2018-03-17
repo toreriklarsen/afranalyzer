@@ -5,34 +5,34 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class CalcUtil {
-    public final static double calculateAverage(List<AFRValue> afrs) {
-        double totalAfr = 0.0d;
-        double totalCount = 0.0d;
-        double avgAfr = 0.0d;
-        double stdDev = 0.0d;
-        double mean = 0.0d;
+    public final static double calculateAverage(List<LogValue> afrs) {
+        double totalAfr = 0.0;
+        double totalCount = 0;
+        double avgAfr = 0.0;
+        double stdDev;
+        double mean;
         int groupNumber = 1;
         //
         double AutoTuneCellStdDev = 1.5d;
         int AutoTuneTimeWindow = 500;
 
         if (afrs.size() == 1) {
-            return afrs.get(0).LLC_AFR;
+            return afrs.get(0).getLLC_AFR();
         }
 
         mean = calculateMean(afrs);
         stdDev = calculateStdDeviation(afrs, mean);
 
-        List<AFRValue> timeWindowValues = new LinkedList<>();
-        double timeWindowAvg = 0.0d;
+        List<LogValue> timeWindowValues = new LinkedList<>();
+        double timeWindowAvg;
 
-        for (AFRValue afrVal : afrs) {
-            if ((afrVal.LLC_AFR >= mean - stdDev * AutoTuneCellStdDev) && (afrVal.LLC_AFR <= mean + stdDev * AutoTuneCellStdDev)) {
+        for (LogValue afrVal : afrs) {
+            if ((afrVal.getLLC_AFR() >= mean - stdDev * AutoTuneCellStdDev) && (afrVal.getLLC_AFR() <= mean + stdDev * AutoTuneCellStdDev)) {
                 if (timeWindowValues.size() == 0) {
                     timeWindowValues.add(afrVal);
                 }
 
-                int timeDifference = (int) (afrVal.Time - timeWindowValues.get(0).Time) * 1000;
+                int timeDifference = (int) (afrVal.getTime() - timeWindowValues.get(0).getTime()) * 1000;
                 if ((timeDifference < AutoTuneTimeWindow) && (timeDifference >= 0)) {
                     if (!timeWindowValues.contains(afrVal)) {
                         timeWindowValues.add(afrVal);
@@ -63,23 +63,23 @@ public class CalcUtil {
     }
 
 
-    public static double calculateStdDeviation(List<AFRValue> afrs, double mean) {
+    public static double calculateStdDeviation(List<LogValue> afrs, double mean) {
         double deviation = 0d;
 
         if ((afrs == null) || (afrs.size() == 0)) {
             return deviation;
         }
 
-        for (AFRValue val : afrs) {
-            deviation += Math.pow(mean - val.LLC_AFR, 2);
+        for (LogValue val : afrs) {
+            deviation += Math.pow(mean - val.getLLC_AFR(), 2);
         }
         return Math.sqrt(deviation / (afrs.size() - 1));
     }
 
-    public static double calculateMean(List<AFRValue> afrs) {
+    public static double calculateMean(List<LogValue> afrs) {
         double sum = 0;
-        for (AFRValue val : afrs) {
-            sum += val.LLC_AFR;
+        for (LogValue val : afrs) {
+            sum += val.getLLC_AFR();
         }
         return sum / afrs.size();
     }
@@ -103,8 +103,8 @@ public class CalcUtil {
                 //i = (d0 <= d1) ? idx - 1 : idx;
                 double length = array[idx] - array[idx - 1];
                 if (value <= array[idx] - (length * (1.0D - factor))) {
-                    i = idx -1;
-                } else if (value > array[idx] -(length * factor)) {
+                    i = idx - 1;
+                } else if (value > array[idx] - (length * factor)) {
                     i = idx;
                 }
             }
@@ -115,14 +115,35 @@ public class CalcUtil {
         return i;
     }
 
+    /**
+     * @param engineVolume in ccm
+     * @param maxRpm
+     * @return
+     */
     public static double maxFlux(double engineVolume, int maxRpm) {
-        return (engineVolume/2) * (maxRpm / 60);
+        return (engineVolume / 2) * (maxRpm / 60);
     }
 
-    public static double pipeVolume(double pipeCrossSection, double pipeLength, int ncylinders) {
-        return pipeCrossSection * ncylinders * pipeLength;
+    // Er det en feil her, arealet diameter TODO NNBNBNB
+    //' cc = cm3 =  (pipe cross section 10 cm2) * 4 * (pipe length 100 cm) = 4000
+    //Dim gasvolume As Double = Math.PI * ((My.Settings.AutoTuneExhaustGasOffsetHeaderPipeDiameter - 2) / 2 / 10) ^ 2 * 4 * My.Settings.AutoTuneExhaustGasOffsetHeaderPipeLength / 10
+
+    /**
+     * @param pipeDiameter - cm
+     * @param pipeLength   - cm
+     * @param ncylinders
+     * @return
+     */
+    public static double pipeVolume(double pipeDiameter, double pipeLength, int ncylinders) {
+        return Math.PI * Math.pow(pipeDiameter / 2, 2) * ncylinders * pipeLength;
+        //return pipeCrossSection * ncylinders * pipeLength;
     }
 
+    /**
+     * @param pipeVolume in ccm
+     * @param maxEgo
+     * @return
+     */
     public static double minFlux(double pipeVolume, int maxEgo) {
         return (pipeVolume * 1000.0) / maxEgo;
     }
@@ -130,12 +151,12 @@ public class CalcUtil {
     /**
      * Calculate the exhaust gas offset (ego)
      *
-     * @param maxEgo - in ms
+     * @param maxEgo     - in ms
      * @param maxFlux
      * @param minFlux
      * @param pipeVolume - in cc
-     * @param rpm - current rpm
-     * @param tps - current tps 0 - 1
+     * @param rpm        - current rpm
+     * @param tps        - current tps 0 - 1
      * @return Exhaust gas offset in ms
      */
     public static double ego(int maxEgo, double maxFlux, double minFlux, double pipeVolume, double rpm, double tps) {
@@ -143,5 +164,19 @@ public class CalcUtil {
         double partialFlux = maxFlux * (rpm / maxEgo) * (tps / 100.0);
 
         return pipeVolume * 1000.0 / (partialFlux + minFlux);
+    }
+
+    /**
+     * Calculate new afr between t1 and t2
+     * @param afrT1 - afr
+     * @param afrT2 - afr
+     * @param t1 - in ms
+     * @param t2 - in ms
+     * @param ego - exhaust gas offset in ms
+     * @return
+     */
+    public static double afrBetweenT1andT2(double afrT1, double afrT2, int t1, int t2, int ego) {
+        double fx = (afrT2 - afrT1) / (t2 - t1);
+        return (afrT1 + (fx * (t2 - t1 - ego)));
     }
 }

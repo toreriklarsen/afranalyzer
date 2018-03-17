@@ -6,7 +6,7 @@ import java.util.List;
 public class AdjAFRValue {
     private double average;
     private int count = 0;
-    List<AFRValue> afrList = new LinkedList<>();
+    private List<LogValue> afrList = new LinkedList<>();
 
     public AdjAFRValue() {
     }
@@ -28,7 +28,7 @@ public class AdjAFRValue {
         return count;
     }
 
-    public void addAFRValue(AFRValue value) {
+    public void addAFRValue(LogValue value) {
         afrList.add(value);
         incAverage(value.getLLC_AFR());
     }

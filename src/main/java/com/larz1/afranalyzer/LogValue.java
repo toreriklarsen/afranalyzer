@@ -1,18 +1,19 @@
 package com.larz1.afranalyzer;
 
-public class AFRValue {
-    // todo make private NBNBNBNB
+public class LogValue {
     public double Time;
     public double ZX_RPM;
     public double ZX_TPS;
     public double ZX_GEAR;
     public double LLC_AFR;
     private boolean skip = false;
+    private boolean egoOffsetApplied = false;
 
-    public AFRValue() {
+
+    public LogValue() {
     }
 
-    public AFRValue(AFRValue a) {
+    public LogValue(LogValue a) {
         this.Time = a.getTime();
         this.ZX_RPM = a.getZX_RPM();
         this.ZX_TPS = a.getZX_TPS();
@@ -21,7 +22,7 @@ public class AFRValue {
         this.skip = a.isSkip();
     }
 
-    public AFRValue(double time, double ZX_RPM, double ZX_TPS, double ZX_GEAR, double LLC_AFR) {
+    public LogValue(double time, double ZX_RPM, double ZX_TPS, double ZX_GEAR, double LLC_AFR) {
         this.Time = time;
         this.ZX_RPM = ZX_RPM;
         this.ZX_TPS = ZX_TPS;
@@ -29,7 +30,7 @@ public class AFRValue {
         this.LLC_AFR = LLC_AFR;
     }
 
-    public AFRValue(double ZX_RPM, double ZX_TPS, double LLC_AFR) {
+    public LogValue(double ZX_RPM, double ZX_TPS, double LLC_AFR) {
         this.ZX_RPM = ZX_RPM;
         this.ZX_TPS = ZX_TPS;
         this.LLC_AFR = LLC_AFR;
@@ -83,9 +84,17 @@ public class AFRValue {
         this.skip = skip;
     }
 
+    public boolean isEgoOffsetApplied() {
+        return egoOffsetApplied;
+    }
+
+    public void setEgoOffsetApplied(boolean egoOffsetApplied) {
+        this.egoOffsetApplied = egoOffsetApplied;
+    }
+
     @Override
     public String toString() {
-        return "AFRValue{" +
+        return "LogValue{" +
                 "Time=" + Time +
                 ", ZX_RPM=" + ZX_RPM +
                 ", ZX_TPS=" + ZX_TPS +
