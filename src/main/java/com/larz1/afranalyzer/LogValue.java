@@ -6,6 +6,7 @@ public class LogValue {
     public double ZX_TPS;
     public double ZX_GEAR;
     public double LLC_AFR;
+    public double ZC_ECT;
     private boolean skip = false;
     private boolean egoOffsetApplied = false;
 
@@ -13,17 +14,24 @@ public class LogValue {
     public LogValue() {
     }
 
+    public LogValue(int time, double ZX_RPM, double ZX_TPS, double LLC_AFR) {
+        Time = time/1000.0;
+        this.ZX_RPM = ZX_RPM;
+        this.ZX_TPS = ZX_TPS;
+        this.LLC_AFR = LLC_AFR;
+    }
+
     public LogValue(LogValue a) {
-        this.Time = a.getTime();
-        this.ZX_RPM = a.getZX_RPM();
-        this.ZX_TPS = a.getZX_TPS();
-        this.ZX_GEAR = a.getZX_GEAR();
-        this.LLC_AFR = a.getLLC_AFR();
+        this.Time = a.getTime()/1000;
+        this.ZX_RPM = a.getRpm();
+        this.ZX_TPS = a.getTps();
+        this.ZX_GEAR = a.getGear();
+        this.LLC_AFR = a.getAfr();
         this.skip = a.isSkip();
     }
 
-    public LogValue(double time, double ZX_RPM, double ZX_TPS, double ZX_GEAR, double LLC_AFR) {
-        this.Time = time;
+    public LogValue(int time, double ZX_RPM, double ZX_TPS, double ZX_GEAR, double LLC_AFR) {
+        this.Time = time/1000;
         this.ZX_RPM = ZX_RPM;
         this.ZX_TPS = ZX_TPS;
         this.ZX_GEAR = ZX_GEAR;
@@ -36,43 +44,51 @@ public class LogValue {
         this.LLC_AFR = LLC_AFR;
     }
 
-    public double getTime() {
-        return Time;
+    /**
+     * Get time in millis
+     * @return
+     */
+    public int getTime() {
+        return (int) (Time * 1000);
     }
 
-    public void setTime(double time) {
-        Time = time;
+    /**
+     * Set time int millis
+     * @param time
+     */
+    public void setTime(int time) {
+        Time = time/1000;
     }
 
-    public double getZX_RPM() {
+    public double getRpm() {
         return ZX_RPM;
     }
 
-    public void setZX_RPM(double ZX_RPM) {
+    public void setRpm(double ZX_RPM) {
         this.ZX_RPM = ZX_RPM;
     }
 
-    public double getZX_TPS() {
+    public double getTps() {
         return ZX_TPS;
     }
 
-    public void setZX_TPS(double ZX_TPS) {
+    public void setTps(double ZX_TPS) {
         this.ZX_TPS = ZX_TPS;
     }
 
-    public double getZX_GEAR() {
+    public double getGear() {
         return ZX_GEAR;
     }
 
-    public void setZX_GEAR(double ZX_GEAR) {
+    public void setGear(double ZX_GEAR) {
         this.ZX_GEAR = ZX_GEAR;
     }
 
-    public double getLLC_AFR() {
+    public double getAfr() {
         return LLC_AFR;
     }
 
-    public void setLLC_AFR(double LLC_AFR) {
+    public void setAfr(double LLC_AFR) {
         this.LLC_AFR = LLC_AFR;
     }
 
@@ -92,6 +108,14 @@ public class LogValue {
         this.egoOffsetApplied = egoOffsetApplied;
     }
 
+    public double getEct() {
+        return ZC_ECT;
+    }
+
+    public void setEct(double ZC_ECT) {
+        this.ZC_ECT = ZC_ECT;
+    }
+
     @Override
     public String toString() {
         return "LogValue{" +
@@ -101,6 +125,6 @@ public class LogValue {
                 ", ZX_GEAR=" + ZX_GEAR +
                 ", LLC_AFR=" + LLC_AFR +
                 ", skip=" + skip +
-                '}' +  '\n';
+                '}' + '\n';
     }
 }

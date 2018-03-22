@@ -4,9 +4,8 @@
 * Filtrere mer, opsjoner på alle filtre
 * OK Swing gui m. tabs og tabeller
     * Tab comparing
-    * Color coded cells and relevant areas
+    * Color coded cells
     * Relevant areas
-* OK Config fra fil, 
 * save cinfog yml spring
 * Data browser m tabell. Mekanismer for
     * Mekanismer for å finne overrun, quickgearshift osv.
@@ -17,17 +16,12 @@
 * Smoot autotune percent values
 * Verify afr cell averaging
 * Verify afr cell location, and should some be excluded?
-
-* Les data riktig fra service
 * Test Copy Paste to Excel fra %compensation
-* Nytt panel for copi fra FI_TOOL, slik at verdiene kan justeres
 * Oppdater verdier fra FI_TOOL med  %compensation
 * Tester
     * Calculering
-    * Filtre
     * Service
 * Statistics in gui
-* Gui load target file
 * Gui edit target file
 * Separator bug target file (Jackson)
 * Bruk Jackson bedre, mer tolerant
@@ -35,6 +29,14 @@
 * Gjør gui mer sexy, farger og div
 * rpm og tps interval bør komme fra target fila
 * Lese andre formater + et generelt
+* TPS header
+* All double == should do Math.abs(a - b) < epsilon, where epsilon = 0.00000001d;
+
+**Bugs**
+* Test does not run i Maven
+* Values in fields should update when lost focus, not by enter
+
+
 
  
 

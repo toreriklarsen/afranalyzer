@@ -55,9 +55,9 @@ public class TestCalcUtil {
     @Test
     void testCalculateMean() {
         List<LogValue> ali = new LinkedList<>();
-        ali.add(new LogValue(1.0D, 1000D, 50D, 1D, 2.5D));
-        ali.add(new LogValue(2.0D, 1000D, 50D, 1D, 2.5D));
-        ali.add(new LogValue(3.0D, 1000D, 50D, 1D, 2.5D));
+        ali.add(new LogValue(100, 1000D, 50D, 1D, 2.5D));
+        ali.add(new LogValue(200, 1000D, 50D, 1D, 2.5D));
+        ali.add(new LogValue(300, 1000D, 50D, 1D, 2.5D));
 
         assertEquals(2.5D, CalcUtil.calculateMean(ali), "error calc mean");
     }
@@ -65,8 +65,8 @@ public class TestCalcUtil {
     @Test
     void testCalculateStdDeviation() {
         List<LogValue> ali = new LinkedList<>();
-        ali.add(new LogValue(1.0D, 1000D, 50D, 1D, 2.5D));
-        ali.add(new LogValue(2.0D, 1000D, 50D, 1D, 2.5D));
+        ali.add(new LogValue(100, 1000D, 50D, 1D, 2.5D));
+        ali.add(new LogValue(200, 1000D, 50D, 1D, 2.5D));
 
         assertEquals(0.0D, CalcUtil.calculateStdDeviation(ali, CalcUtil.calculateMean(ali)), "error calc mean");
     }
@@ -74,9 +74,9 @@ public class TestCalcUtil {
     @Test
     void testCalculateAverage() {
         List<LogValue> ali = new LinkedList<>();
-        ali.add(new LogValue(1.0D, 1000D, 50D, 1D, 2.5D));
-        ali.add(new LogValue(2.0D, 1000D, 50D, 1D, 2.5D));
-        ali.add(new LogValue(3.0D, 1000D, 50D, 1D, 2.5D));
+        ali.add(new LogValue(1000, 1000D, 50D, 1D, 2.5D));
+        ali.add(new LogValue(2000, 1000D, 50D, 1D, 2.5D));
+        ali.add(new LogValue(3000, 1000D, 50D, 1D, 2.5D));
 
         assertEquals(2.5d, CalcUtil.calculateAverage(ali));
     }
@@ -84,16 +84,16 @@ public class TestCalcUtil {
     @Test
     void testCalculateAverageOneValue() {
         List<LogValue> ali = new LinkedList<>();
-        ali.add(new LogValue(1.0D, 1000D, 50D, 1D, 2.5D));
+        ali.add(new LogValue(1000, 1000D, 50D, 1D, 2.5D));
         assertEquals(2.5d, CalcUtil.calculateAverage(ali));
     }
 
     @Test
     void testCalculateAverage3Values() {
         List<LogValue> ali = new LinkedList<>();
-        ali.add(new LogValue(1.0D, 1000D, 50D, 1D, 2.5D));
-        ali.add(new LogValue(2.0D, 1000D, 50D, 1D, 2.5D));
-        ali.add(new LogValue(3.0D, 1000D, 50D, 1D, 2.5D));
+        ali.add(new LogValue(1000, 1000D, 50D, 1D, 2.5D));
+        ali.add(new LogValue(2000, 1000D, 50D, 1D, 2.5D));
+        ali.add(new LogValue(3000, 1000D, 50D, 1D, 2.5D));
 
         assertEquals(2.5D, CalcUtil.calculateAverage(ali), "error calc mean");
     }
@@ -101,26 +101,26 @@ public class TestCalcUtil {
     @Test
     void testCalculateAverageManyValues3Wins() {
         List<LogValue> ali = new LinkedList<>();
-        ali.add(new LogValue(1.01D, 1000D, 50D, 1D, 1D));
-        ali.add(new LogValue(1.02D, 1000D, 50D, 1D, 2D));
-        ali.add(new LogValue(1.03D, 1000D, 50D, 1D, 3D));
-        ali.add(new LogValue(1.04D, 1000D, 50D, 1D, 4D));
-        ali.add(new LogValue(1.05D, 1000D, 50D, 1D, 5D));
+        ali.add(new LogValue(1010, 1000D, 50D, 1D, 1D));
+        ali.add(new LogValue(1020, 1000D, 50D, 1D, 2D));
+        ali.add(new LogValue(1030, 1000D, 50D, 1D, 3D));
+        ali.add(new LogValue(1040, 1000D, 50D, 1D, 4D));
+        ali.add(new LogValue(1050, 1000D, 50D, 1D, 5D));
 
         assertEquals(3D, CalcUtil.calculateMean(ali), "error calc mean");
         assertEquals(3D, CalcUtil.calculateAverage(ali), "error calc mean");
 
-        ali.add(new LogValue(4.01D, 1000D, 50D, 1D, 1D));
-        ali.add(new LogValue(4.02D, 1000D, 50D, 1D, 2D));
-        ali.add(new LogValue(4.03D, 1000D, 50D, 1D, 3D));
-        ali.add(new LogValue(4.04D, 1000D, 50D, 1D, 4D));
-        ali.add(new LogValue(4.05D, 1000D, 50D, 1D, 5D));
+        ali.add(new LogValue(4010, 1000D, 50D, 1D, 1D));
+        ali.add(new LogValue(4020, 1000D, 50D, 1D, 2D));
+        ali.add(new LogValue(4030, 1000D, 50D, 1D, 3D));
+        ali.add(new LogValue(4040, 1000D, 50D, 1D, 4D));
+        ali.add(new LogValue(4050, 1000D, 50D, 1D, 5D));
 
-        ali.add(new LogValue(8.01D, 1000D, 50D, 1D, 1D));
-        ali.add(new LogValue(8.02D, 1000D, 50D, 1D, 2D));
-        ali.add(new LogValue(8.03D, 1000D, 50D, 1D, 3D));
-        ali.add(new LogValue(8.04D, 1000D, 50D, 1D, 4D));
-        ali.add(new LogValue(8.05D, 1000D, 50D, 1D, 5D));
+        ali.add(new LogValue(8010, 1000D, 50D, 1D, 1D));
+        ali.add(new LogValue(8020, 1000D, 50D, 1D, 2D));
+        ali.add(new LogValue(8030, 1000D, 50D, 1D, 3D));
+        ali.add(new LogValue(8040, 1000D, 50D, 1D, 4D));
+        ali.add(new LogValue(8050, 1000D, 50D, 1D, 5D));
 
         assertEquals(3D, CalcUtil.calculateAverage(ali), "error calc mean");
 
@@ -131,6 +131,15 @@ public class TestCalcUtil {
     void testMaxFluxSimple() {
         assertEquals(50000.0, CalcUtil.maxFlux(1000, 6000));
         assertEquals(100000.0, CalcUtil.maxFlux(1000, 12000));
+    }
+
+    @Test
+    void testAfrBetweenT1andT2() {
+        assertEquals(12, CalcUtil.afrBetweenT1andT2(12, 12, 100, 200, 50));
+        assertEquals(12.5, CalcUtil.afrBetweenT1andT2(12, 13, 100, 200, 50));
+        assertEquals(13, CalcUtil.afrBetweenT1andT2(12, 14, 100, 200, 50));
+        assertEquals(14, CalcUtil.afrBetweenT1andT2(12, 14, 100, 200, 0));
+        assertEquals(12, CalcUtil.afrBetweenT1andT2(12, 14, 100, 200, 100));
     }
 
 }

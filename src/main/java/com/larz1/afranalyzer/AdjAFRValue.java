@@ -30,7 +30,7 @@ public class AdjAFRValue {
 
     public void addAFRValue(LogValue value) {
         afrList.add(value);
-        incAverage(value.getLLC_AFR());
+        incAverage(value.getAfr());
     }
 
     @Override

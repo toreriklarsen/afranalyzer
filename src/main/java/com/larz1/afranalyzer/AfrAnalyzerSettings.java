@@ -46,11 +46,6 @@ public class AfrAnalyzerSettings {
 
     @Value("${celltoleranceenabled:false}")
     public Boolean cellToleranceEnabled;
-    @Value("${cellTolerance:0.25}")
-    Double cellTolerance;
-
-
-
-
-
+    @Value("${cellTolerance:0.5}")
+    public Double cellTolerance;
 }

@@ -41,7 +41,6 @@ public class AutoTuneTable extends JFrame {
     private AfrModel cpModel;
     private AfrModel egoModel;
 
-
     /* UI Components */
     private JFileChooser afrFileChooser;
     private JFileChooser targetAfrFileChooser;
@@ -50,8 +49,6 @@ public class AutoTuneTable extends JFrame {
     private JButton testFileButton;
     private JButton afrFileSelectButton;
     private JButton targetAfrFileSelectButton;
-
-
     private JButton calculateButton;
 
     private JPanel contentPane;
@@ -244,7 +241,7 @@ public class AutoTuneTable extends JFrame {
         maxAfrBox.addActionListener(ae -> checkMaxAfrFilter());
         maxAfrBox.setToolTipText(tooltipText);
         tooltipText = "Max AFR filter value";
-        maxAfrField = new JTextField("" + afrAnalyzerSettings.maxAfr, 4);
+        maxAfrField = new JTextField("" + afrAnalyzerSettings.maxAfr);
         maxAfrField.addActionListener(ae -> maxAfrChanged());
         maxAfrField.setToolTipText(tooltipText);
 
@@ -254,6 +251,7 @@ public class AutoTuneTable extends JFrame {
         minAfrBox.setToolTipText(tooltipText);
         tooltipText = "Min AFR filter value";
         minAfrField = new JTextField("" + afrAnalyzerSettings.minAfr);
+        minAfrField.addActionListener(ae -> minAfrChanged());
         minAfrField.setToolTipText(tooltipText);
 
         tooltipText = "Filter out values due to upshifting with quickshifter";
@@ -450,13 +448,19 @@ public class AutoTuneTable extends JFrame {
 
     private void neutralFilter() {
         afrAnalyzerSettings.neutralEnabled = neutralBox.isSelected();
-        // rerun filter, for now reload
         loadTestData();
     }
 
     private void maxAfrChanged() {
         afrAnalyzerSettings.maxAfr = new Double(maxAfrField.getText());
         if (maxAfrBox.isEnabled()) {
+            loadTestData();
+        }
+    }
+
+    private void minAfrChanged() {
+        afrAnalyzerSettings.minAfr = new Double(minAfrField.getText());
+        if (minAfrBox.isEnabled()) {
             loadTestData();
         }
     }
@@ -504,7 +508,7 @@ public class AutoTuneTable extends JFrame {
             nf.setMaximumFractionDigits(p_precision);
             nf.setRoundingMode(RoundingMode.HALF_UP);
         }
-
+/*
         public SubstDouble2DecimalRenderer() {
             super();
             setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
@@ -513,7 +517,7 @@ public class AutoTuneTable extends JFrame {
             nf.setMaximumFractionDigits(2);
             nf.setRoundingMode(RoundingMode.HALF_UP);
         }
-
+*/
         @Override
         public void setValue(Object value) {
             if ((value != null) && (value instanceof Number)) {

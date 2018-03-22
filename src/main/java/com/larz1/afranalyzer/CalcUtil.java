@@ -5,7 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class CalcUtil {
-    public final static double calculateAverage(List<LogValue> afrs) {
+    public final static double calculateAverage(List<LogValue> logValues) {
         double totalAfr = 0.0;
         double totalCount = 0;
         double avgAfr = 0.0;
@@ -13,26 +13,27 @@ public class CalcUtil {
         double mean;
         int groupNumber = 1;
         //
+        // todo move into settings
         double AutoTuneCellStdDev = 1.5d;
         int AutoTuneTimeWindow = 500;
 
-        if (afrs.size() == 1) {
-            return afrs.get(0).getLLC_AFR();
+        if (logValues.size() == 1) {
+            return logValues.get(0).getAfr();
         }
 
-        mean = calculateMean(afrs);
-        stdDev = calculateStdDeviation(afrs, mean);
+        mean = calculateMean(logValues);
+        stdDev = calculateStdDeviation(logValues, mean);
 
         List<LogValue> timeWindowValues = new LinkedList<>();
         double timeWindowAvg;
 
-        for (LogValue afrVal : afrs) {
-            if ((afrVal.getLLC_AFR() >= mean - stdDev * AutoTuneCellStdDev) && (afrVal.getLLC_AFR() <= mean + stdDev * AutoTuneCellStdDev)) {
+        for (LogValue afrVal : logValues) {
+            if ((afrVal.getAfr() >= mean - stdDev * AutoTuneCellStdDev) && (afrVal.getAfr() <= mean + stdDev * AutoTuneCellStdDev)) {
                 if (timeWindowValues.size() == 0) {
                     timeWindowValues.add(afrVal);
                 }
 
-                int timeDifference = (int) (afrVal.getTime() - timeWindowValues.get(0).getTime()) * 1000;
+                int timeDifference = afrVal.getTime() - timeWindowValues.get(0).getTime();
                 if ((timeDifference < AutoTuneTimeWindow) && (timeDifference >= 0)) {
                     if (!timeWindowValues.contains(afrVal)) {
                         timeWindowValues.add(afrVal);
@@ -71,7 +72,7 @@ public class CalcUtil {
         }
 
         for (LogValue val : afrs) {
-            deviation += Math.pow(mean - val.getLLC_AFR(), 2);
+            deviation += Math.pow(mean - val.getAfr(), 2);
         }
         return Math.sqrt(deviation / (afrs.size() - 1));
     }
@@ -79,7 +80,7 @@ public class CalcUtil {
     public static double calculateMean(List<LogValue> afrs) {
         double sum = 0;
         for (LogValue val : afrs) {
-            sum += val.getLLC_AFR();
+            sum += val.getAfr();
         }
         return sum / afrs.size();
     }
@@ -159,20 +160,21 @@ public class CalcUtil {
      * @param tps        - current tps 0 - 1
      * @return Exhaust gas offset in ms
      */
-    public static double ego(int maxEgo, double maxFlux, double minFlux, double pipeVolume, double rpm, double tps) {
-        if ((rpm < 500) || (tps < 0.1)) return 0.0;
+    public static int ego(int maxEgo, double maxFlux, double minFlux, double pipeVolume, double rpm, double tps) {
+        if ((rpm < 500) || (tps < 0.1)) return 0;
         double partialFlux = maxFlux * (rpm / maxEgo) * (tps / 100.0);
 
-        return pipeVolume * 1000.0 / (partialFlux + minFlux);
+        return (int)(pipeVolume * 1000.0 / (partialFlux + minFlux));
     }
 
     /**
      * Calculate new afr between t1 and t2
+     *
      * @param afrT1 - afr
      * @param afrT2 - afr
-     * @param t1 - in ms
-     * @param t2 - in ms
-     * @param ego - exhaust gas offset in ms
+     * @param t1    - in ms
+     * @param t2    - in ms
+     * @param ego   - exhaust gas offset in ms
      * @return
      */
     public static double afrBetweenT1andT2(double afrT1, double afrT2, int t1, int t2, int ego) {

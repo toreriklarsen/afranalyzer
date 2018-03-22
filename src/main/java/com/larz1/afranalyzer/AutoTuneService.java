@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.dataformat.csv.CsvMapper;
 import com.fasterxml.jackson.dataformat.csv.CsvParser;
 import com.fasterxml.jackson.dataformat.csv.CsvSchema;
-import com.larz1.afranalyzer.filter.MaxFilter;
+import com.larz1.afranalyzer.filter.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,16 +33,31 @@ public class AutoTuneService {
     private AfrAnalyzerSettings afrAnalyzerSettings;
 
     @Autowired
-    private MaxFilter maxFilter;
+    private MaxAfrFilter maxAfrFilter;
+
+    @Autowired
+    private MinAfrFilter minAfrFilter;
+
+    @Autowired
+    private MinRpmFilter minRpmFilter;
+
+    @Autowired
+    private NeutralFilter neutralFilter;
+
+    @Autowired
+    private CellToleranceFilter cellToleranceFilter;
+
+    @Autowired
+    private MinEctFilter minEctFilter;
 
     public enum PRINT {
         AFR,
         COUNT
     }
 
-    static double[] tpsArray = {0.0, 0.8, 2.3, 4.7, 7.8, 10.2, 14.8, 20.3, 29.7, 39.8, 50.0, 75.0, 100.0};
+    public static double[] tpsArray = {0.0, 0.8, 2.3, 4.7, 7.8, 10.2, 14.8, 20.3, 29.7, 39.8, 50.0, 75.0, 100.0};
     //double[] tpsArray = {0.0, 2.0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.9, 45.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0};
-    static double[] rpmArray = {0.0, 1000.0, 2000.0, 3000.0, 4000.0, 5000.0, 6000.0, 7000.0, 8000.0, 9000.0, 10000.0, 11000.0, 12000.0, 12500.0, 13000.0, 13500.0, 14000.0};
+    public static double[] rpmArray = {0.0, 1000.0, 2000.0, 3000.0, 4000.0, 5000.0, 6000.0, 7000.0, 8000.0, 9000.0, 10000.0, 11000.0, 12000.0, 12500.0, 13000.0, 13500.0, 14000.0};
 
 
     @Value("${printafr:true}")
@@ -98,8 +113,8 @@ public class AutoTuneService {
         System.out.println("********** " + header + " **********");
         System.out.print("      ");
         System.out.print(ConsoleColors.GREEN);
-        for (int j = 0; j < rpmArray.length; j++) {
-            System.out.format("% 7d", (int) rpmArray[j]);
+        for (double aRpmArray : rpmArray) {
+            System.out.format("% 7d", (int) aRpmArray);
         }
 
         System.out.print(ConsoleColors.RESET);
@@ -199,38 +214,46 @@ public class AutoTuneService {
         return mArr;
     }
 
+    /**
+     * Filter out values
+     *
+     * @param dataList
+     * @return
+     */
     List<LogValue> filter(List<LogValue> dataList) {
         final int[] prevGear = {6};
         final int[] gear = {0};
         final int[] i = {0};
         List<LogValue> retList = new ArrayList<>(dataList.size());
 
-
         dataList.forEach(data -> {
-            gear[0] = (int) data.getZX_GEAR();
+            gear[0] = (int) data.getGear();
             LogValue logValue = new LogValue(data);
             data.setSkip(false);
 
-            if (maxFilter.filter(data)) {
-                logger.trace("filtering out afr value, {} > max {}, tps:{} time:{}", data.getLLC_AFR(), afrAnalyzerSettings.maxAfr, data.getZX_TPS(), data.getTime());
-            } else if ((afrAnalyzerSettings.minAfrEnabled) && (data.getLLC_AFR() < afrAnalyzerSettings.minAfr)) {
+            if (maxAfrFilter.filter(data)) {
+                logger.trace("filtering out afr value, {} > max {}, tps:{} time:{}", data.getAfr(), afrAnalyzerSettings.maxAfr, data.getTps(), data.getTime());
+            } else if (minAfrFilter.filter(data)) {
                 //logValue.setSkip(true);
-                logger.trace("filtering out afr value, {} < max {}, tps:{} time:{}", data.getLLC_AFR(), afrAnalyzerSettings.minAfr, data.getZX_TPS(), data.getTime());
-            } else if ((afrAnalyzerSettings.lowRpmEnabled) && (data.getZX_RPM() < afrAnalyzerSettings.lowRpm)) {
+                logger.trace("filtering out afr value, {} < max {}, tps:{} time:{}", data.getAfr(), afrAnalyzerSettings.minAfr, data.getTps(), data.getTime());
+            } else if (minEctFilter.filter(data)) {
                 //logValue.setSkip(true);
-                logger.trace("filtering out afr {} value,RPM {} < {}", data.getLLC_AFR(), data.getZX_RPM(), afrAnalyzerSettings.lowRpm);
-            } else if ((afrAnalyzerSettings.neutralEnabled) && (data.getZX_GEAR() == 0.0)) {
+                logger.trace("filtering out afr {} value,ECT {} < {}", data.getAfr(), data.getEct(), afrAnalyzerSettings.minEct);
+            } else if (minRpmFilter.filter(data)) {
                 //logValue.setSkip(true);
-                logger.trace("filtering out afr {} value, gear is 0(neutral)", data.getLLC_AFR());
-            } else if ((afrAnalyzerSettings.cellToleranceEnabled) && (findIndex(rpmArray, data.getZX_RPM(), 0.25D) == null)) {
+                logger.trace("filtering out afr {} value,RPM {} < {}", data.getAfr(), data.getRpm(), afrAnalyzerSettings.lowRpm);
+            } else if (neutralFilter.filter(data)) {
                 //logValue.setSkip(true);
-                logger.trace("filtering out afr {} value, rpm {} is outside tolerance {}, time: {}", data.getLLC_AFR(), data.getZX_RPM(), 0.25D, data.getTime());
+                logger.trace("filtering out afr {} value, gear is 0(neutral)", data.getAfr());
+            } else if (cellToleranceFilter.filter(data, afrAnalyzerSettings.cellTolerance)) {
+                //logValue.setSkip(true);
+                logger.trace("filtering out afr {} value, rpm {} is outside tolerance {}, time: {}", data.getAfr(), data.getRpm(), 0.25D, data.getTime());
             } else if ((afrAnalyzerSettings.quickshiftEnabled) && (gear[0] > prevGear[0])) {
                 // filter out to prev values
                 dataList.get(i[0] - 2).setSkip(true);
                 dataList.get(i[0] - 1).setSkip(true);
                 //logValue.setSkip(true);
-                logger.trace("filtering out afr:{} afr:{} time:{} due to upshift", dataList.get(i[0] - 2).getLLC_AFR(), dataList.get(i[0] - 1).getLLC_AFR(), data.getTime());
+                logger.trace("filtering out afr:{} afr:{} time:{} due to upshift", dataList.get(i[0] - 2).getAfr(), dataList.get(i[0] - 1).getAfr(), data.getTime());
             } else {
                 retList.add(logValue);
                 //logValue.setSkip(false);
@@ -255,8 +278,8 @@ public class AutoTuneService {
         logValues.forEach(value -> {
             if (!value.isSkip()) {
                 // find tps index
-                Integer tpsInd = findIndex(tpsArray, value.getZX_TPS());
-                Integer rpmInd = findIndex(rpmArray, value.getZX_RPM());
+                Integer tpsInd = findIndex(tpsArray, value.getTps());
+                Integer rpmInd = findIndex(rpmArray, value.getRpm());
                 if ((tpsInd == null) || (rpmInd == null)) {
                     logger.debug("got taken out");
                 }
@@ -295,7 +318,7 @@ public class AutoTuneService {
     AdjAFRValue[][] calculateEgo() {
         AdjAFRValue[][] mArr = new AdjAFRValue[tpsArray.length][rpmArray.length];
 
-        // todo set in settings
+        // todo set this in settings
         double maxFLux = CalcUtil.maxFlux(998, 13550);
         double pipeVolume = CalcUtil.pipeVolume(45.0, 95.0, 4);
         double minFLux = CalcUtil.minFlux(pipeVolume, 250);
@@ -310,16 +333,53 @@ public class AutoTuneService {
         return mArr;
     }
 
-    public void applyEgo(List<LogValue> lv) {
-        // for hver verdi
-        for (int i = 0; i < lv.size(); i++) {
-            logger.trace(" epplyEgo logValue: {}", lv.get(i));
-            // let tilbake
-            for (int j = 1; j < 10 && i - j > 0; j++) {
-                LogValue tmpLv = lv.get(i - j);
+    public void applyEgo(List<LogValue> logValues, Object... args) {
+        boolean fixedEgoFLag = false;
+        int fixedEgo = 0;
+        int ego;
+        if (args.length == 1) {
+            fixedEgoFLag = true;
+            fixedEgo = (int) args[0];
+        }
+        //
+
+        double maxFLux = CalcUtil.maxFlux(998, 13550);
+        double pipeVolume = CalcUtil.pipeVolume(45.0, 95.0, 4);
+        double minFLux = CalcUtil.minFlux(pipeVolume, 250);
+
+        for (int i = 0; i < logValues.size(); i++) {
+            //logger.trace("applyEgo logValue: {}", lv.get(i));
+            // look backwards
+            LogValue lv = logValues.get(i);
+            if (!fixedEgoFLag) {
+                ego = CalcUtil.ego(250, maxFLux, minFLux, pipeVolume, lv.getRpm(), lv.getTps());
+            } else {
+                ego = fixedEgo;
             }
 
-            i++;
+            System.out.println("at ego:" + ego + " time." + lv.getTime() + " rpm:" + lv.getRpm() + " tps:" + lv.getTps() + " afr:" + lv.getAfr());
+            for (int j = 1; j < 10 && i - j >= 0; j++) {
+                LogValue prevLv = logValues.get(i - j);
+                int timeDiff = lv.getTime() - prevLv.getTime();
+                if ((timeDiff * j) < ego) {
+                    continue;
+                }
+                int idxt2 = i - j;
+                int idxt1 = idxt2 - 1;
+                System.out.println("found ego:" + ego + " time." + lv.getTime() + " rpm:" + lv.getRpm() + " tps:" + lv.getTps() + " afr:" + lv.getAfr() + " i:" + i + " j:" + j);
+                System.out.println("idxt1: " + idxt1 + " idxt2: " + idxt2);
+                // fant, ligger mellom i og i-1
+                //
+                // now
+                int recalcEgo = lv.getTime() - ego - logValues.get(idxt1).getTime();
+                System.out.println("recalc ego: " + recalcEgo);
+                double calculatedAfr = CalcUtil.afrBetweenT1andT2(logValues.get(idxt1).getAfr(), logValues.get(idxt2).getAfr(), (logValues.get(idxt1).getTime()),
+                        logValues.get(idxt2).getTime(), lv.getTime() - (int) ego);
+                System.out.println("calc afr:" + calculatedAfr);
+                logValues.get(i).setAfr(calculatedAfr);
+                logValues.get(i).setEgoOffsetApplied(true);
+                break;
+            }
         }
         // let tilbake til tid < t2 - offset
         // hvis interval brytes ikke gjøre noe
@@ -329,18 +389,19 @@ public class AutoTuneService {
     public void dumpAfrValues(List<LogValue> logValues) {
         logValues.forEach(value -> {
             //time rpm afr gear
-            if (value.getZX_RPM() >= 13500.0) {
+            if (value.getRpm() >= 13500.0) {
                 System.out.print(ConsoleColors.RED_BACKGROUND);
             }
 
-            System.out.format("% 6.1f", value.getTime());
-            System.out.format("% 7.0f", value.getZX_RPM());
-            System.out.format("% 5.1f", value.getZX_TPS());
-            System.out.format("% 5.1f", value.getLLC_AFR());
-            System.out.format("% 3.1f", value.getZX_GEAR());
+            System.out.format("% 8d", value.getTime());
+            System.out.format("% 7.0f", value.getRpm());
+            System.out.format("% 5.1f", value.getTps());
+            System.out.format("% 5.2f", value.getAfr());
+            System.out.format("% 3.1f", value.getGear());
+            System.out.print(" " + value.isEgoOffsetApplied());
             System.out.println();
 
-            if (value.getZX_RPM() >= 13500.0) {
+            if (value.getRpm() >= 13500.0) {
                 System.out.print(ConsoleColors.RESET);
             }
         });

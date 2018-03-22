@@ -12,6 +12,4 @@ class AbstractAfrFilter implements AfrFilter {
     public AbstractAfrFilter(AfrAnalyzerSettings afrAnalyzerSettings) {
         this.afrAnalyzerSettings = afrAnalyzerSettings;
     }
-
-
 }
