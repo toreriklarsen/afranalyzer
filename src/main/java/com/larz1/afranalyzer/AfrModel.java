@@ -13,8 +13,10 @@ class AfrModel extends AbstractTableModel {
 
     private final static int MAX_COL = 18;
     private final static int MAX_ROW = 13;
+
     private AdjAFRValue[][] mapArray;
     private boolean editable = false;
+    private boolean cellColorControl = false;
 
     public AfrModel() {
     }
@@ -23,10 +25,23 @@ class AfrModel extends AbstractTableModel {
         this.editable = editable;
     }
 
+    public AfrModel(boolean editable, boolean cellColorControl) {
+        this.editable = editable;
+        this.cellColorControl = cellColorControl;
+    }
+
     public void setMapArray(AdjAFRValue[][] mapArray) {
         this.mapArray = mapArray;
         fireTableDataChanged();
 
+    }
+
+    public boolean isCellColorControl() {
+        return cellColorControl;
+    }
+
+    public void setCellColorControl(boolean cellColorControl) {
+        this.cellColorControl = cellColorControl;
     }
 
     public boolean isCellEditable(int rowIndex, int columnIndex) {

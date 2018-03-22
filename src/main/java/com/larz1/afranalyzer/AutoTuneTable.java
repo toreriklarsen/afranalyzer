@@ -202,7 +202,7 @@ public class AutoTuneTable extends JFrame {
         filteredAfrModel = new AfrModel();
         targetAfrModel = new AfrModel();
         compAfrModel = new AfrModel();
-        egoModel = new AfrModel();
+        egoModel = new AfrModel(false, true);
         cpModel = new AfrModel(true);
         AdjAFRValue[][] mArr = new AdjAFRValue[AutoTuneService.tpsArray.length][AutoTuneService.rpmArray.length];
         for (int i = 0; i < AutoTuneService.tpsArray.length; i++) {
@@ -212,12 +212,12 @@ public class AutoTuneTable extends JFrame {
         }
         cpModel.setMapArray(mArr);
 
-        afrTable = createTable(afrModel);
-        filteredAfrTable = createTable(filteredAfrModel);
-        targetAfrTable = createTable(targetAfrModel);
-        compAfrTable = createTable(compAfrModel, true);
-        egoTable = createTable(egoModel);
-        cpTable = createTable(cpModel);
+        afrTable = new TpsRpmTable(afrModel, afrAnalyzerSettings);
+        filteredAfrTable = new TpsRpmTable(filteredAfrModel, compAfrModel, true, afrAnalyzerSettings);
+        targetAfrTable = new TpsRpmTable(targetAfrModel, afrAnalyzerSettings);
+        compAfrTable = new TpsRpmTable(compAfrModel, null, true, afrAnalyzerSettings);
+        egoTable = new TpsRpmTable(egoModel, afrAnalyzerSettings);
+        cpTable = new TpsRpmTable(cpModel, afrAnalyzerSettings);
 
         afrTableScroll = new JScrollPane(afrTable);
         filteredAfrTableScroll = new JScrollPane(filteredAfrTable);
@@ -351,86 +351,6 @@ public class AutoTuneTable extends JFrame {
         );
     }
 
-    /**
-     * Create and return a table for the given model.
-     * <p>
-     * This is protected so that a subclass can return an instance
-     * of a different {@code JTable} subclass. This is interesting
-     * only for {@code TablePrintDemo3} where we want to return a
-     * subclass that overrides {@code getPrintable} to return a
-     * custom {@code Printable} implementation.
-     */
-
-    protected JTable createTable(TableModel model) {
-        return createTable(model, false);
-    }
-
-    protected JTable createTable(TableModel model, Boolean color) {
-        JTable jt = new JTable(model) {
-            /*
-            public void changeSelection(int row, int column, boolean toggle, boolean extend) {
-                super.changeSelection(row, column, toggle, extend);
-
-                if (editCellAt(row, column)) {
-                    Component editor = getEditorComponent();
-                    editor.requestFocusInWindow();
-                }
-            }*/
-
-
-            //Implement table cell tool tips.
-            public String getToolTipText(MouseEvent e) {
-                String tip = null;
-                java.awt.Point p = e.getPoint();
-                int rowIndex = rowAtPoint(p);
-                int colIndex = columnAtPoint(p);
-
-                try {
-                    //tip = getValueAt(rowIndex, colIndex).toString();
-                    tip = ((AfrModel) getModel()).getMapArray()[rowIndex][colIndex - 1].toString();
-                } catch (RuntimeException e1) {
-                    //catch null pointer exception if mouse is over an empty line
-                }
-
-                return tip;
-            }
-        };
-
-        jt.setFillsViewportHeight(true);
-        jt.setRowHeight(24);
-        jt.setCellSelectionEnabled(true);
-
-        for (int i = 1; i <= 13; i++) {
-            if (color) {
-                jt.getColumn("" + (i - 1) * 1000).setCellRenderer(createColoredSubstDouble2DecimalRenderer());
-            } else {
-                jt.getColumn("" + (i - 1) * 1000).setCellRenderer(createSubstDouble2DecimalRenderer());
-            }
-        }
-        if (color) {
-            jt.getColumn("12500").setCellRenderer(createColoredSubstDouble2DecimalRenderer());
-            jt.getColumn("13000").setCellRenderer(createColoredSubstDouble2DecimalRenderer());
-            jt.getColumn("13500").setCellRenderer(createColoredSubstDouble2DecimalRenderer());
-            jt.getColumn("14000").setCellRenderer(createColoredSubstDouble2DecimalRenderer());
-        } else {
-            jt.getColumn("12500").setCellRenderer(createSubstDouble2DecimalRenderer());
-            jt.getColumn("13000").setCellRenderer(createSubstDouble2DecimalRenderer());
-            jt.getColumn("13500").setCellRenderer(createSubstDouble2DecimalRenderer());
-            jt.getColumn("14000").setCellRenderer(createSubstDouble2DecimalRenderer());
-        }
-        ExcelAdapter myAd = new ExcelAdapter(jt);
-
-        return jt;
-    }
-
-    protected TableCellRenderer createSubstDouble2DecimalRenderer() {
-        return new SubstDouble2DecimalRenderer(1);
-    }
-
-    protected TableCellRenderer createColoredSubstDouble2DecimalRenderer() {
-        return new ColoredSubstDouble2DecimalRenderer(1);
-    }
-
     private void checkMaxAfrFilter() {
         afrAnalyzerSettings.maxAfrEnabled = maxAfrBox.isSelected();
         loadTestData();
@@ -488,90 +408,6 @@ public class AutoTuneTable extends JFrame {
         afrAnalyzerSettings.lowRpm = new Integer(lowRpmField.getText());
         if (lowRpmBox.isEnabled()) {
             loadTestData();
-        }
-    }
-
-
-    protected static class SubstDouble2DecimalRenderer extends DefaultTableCellRenderer {
-
-        private static final long serialVersionUID = 1L;
-        private int precision = 0;
-        protected Number numberValue;
-        protected NumberFormat nf;
-
-        public SubstDouble2DecimalRenderer(int p_precision) {
-            super();
-            setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-            precision = p_precision;
-            nf = NumberFormat.getNumberInstance();
-            nf.setMinimumFractionDigits(p_precision);
-            nf.setMaximumFractionDigits(p_precision);
-            nf.setRoundingMode(RoundingMode.HALF_UP);
-        }
-/*
-        public SubstDouble2DecimalRenderer() {
-            super();
-            setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
-            nf = NumberFormat.getNumberInstance();
-            nf.setMinimumFractionDigits(2);
-            nf.setMaximumFractionDigits(2);
-            nf.setRoundingMode(RoundingMode.HALF_UP);
-        }
-*/
-        @Override
-        public void setValue(Object value) {
-            if ((value != null) && (value instanceof Number)) {
-                numberValue = (Number) value;
-                value = nf.format(numberValue.doubleValue());
-            }
-            super.setValue(value);
-        }
-    }
-
-    protected class ColoredSubstDouble2DecimalRenderer extends SubstDouble2DecimalRenderer {
-        public ColoredSubstDouble2DecimalRenderer(int p_precision) {
-            super(p_precision);
-        }
-
-        @Override
-        public void setValue(Object value) {
-            if ((value != null) && (value instanceof Number)) {
-                numberValue = (Number) value;
-                value = nf.format(numberValue.doubleValue());
-                setBackground(getCellBackgroundColor(new Double((String) value)));
-                setForeground(getCellForegroundColor(new Double((String) value)));
-            }
-            super.setValue(value);
-        }
-
-        private Color getCellBackgroundColor(double value) {
-            value = value / 100;
-            if (value > afrAnalyzerSettings.maxTunePercentage) {
-                return new Color(255, 0, 0);
-            } else if (value > 0.1 * afrAnalyzerSettings.maxTunePercentage) {
-                int greenvalue = (int) ((afrAnalyzerSettings.maxTunePercentage - value) / afrAnalyzerSettings.maxTunePercentage * 255);
-                return new Color(255, greenvalue, greenvalue);
-            } else if ((value <= 0.1 * afrAnalyzerSettings.maxTunePercentage) && (value >= -0.1 * afrAnalyzerSettings.maxTunePercentage)) {
-                return Color.white;
-            } else if ((value < -0.1 * afrAnalyzerSettings.maxTunePercentage) && (value > -afrAnalyzerSettings.maxTunePercentage)) {
-                int greenvalue = (int) ((afrAnalyzerSettings.maxTunePercentage + value) / afrAnalyzerSettings.maxTunePercentage * 255);
-                return new Color(0, greenvalue, 255);
-
-            } else {
-                return new Color(0, 0, 255);
-            }
-        }
-
-        private Color getCellForegroundColor(double value) {
-            value = value / 100;
-
-            if (value > afrAnalyzerSettings.maxTunePercentage) {
-                return Color.white;
-            } else if (value < (-afrAnalyzerSettings.maxTunePercentage)) {
-                return Color.white;
-            } else {
-                return Color.black;
-            }
         }
     }
 }

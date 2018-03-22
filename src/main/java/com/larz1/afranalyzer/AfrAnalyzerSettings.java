@@ -48,4 +48,7 @@ public class AfrAnalyzerSettings {
     public Boolean cellToleranceEnabled;
     @Value("${cellTolerance:0.5}")
     public Double cellTolerance;
+
+    @Value("${tablecellprecision:1}")
+    public Integer tableCellPrecision;
 }

@@ -1,16 +1,6 @@
 # Afranalyzer
 
 ## Todo
-* Lag en bra Readme
-* Fargekoding i celler
-* Legg prosjekt på github
-* Start app riktig, med main og table
-* Les data riktig fra service
-* Benytt AFRSettings
-* Implementer lesing av AFR targets
-* Vis tabber for data: raw i samme som filtered, count, %compensation
-* Lag panel for AFRSettings, interaktiv oppdatering ved on/off filter
-* Test Copy Paste to Excel fra %compensation
 
 
 One Paragraph of project description goes here
