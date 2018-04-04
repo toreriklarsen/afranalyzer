@@ -2,16 +2,15 @@ package com.larz1.afranalyzer.filter;
 
 import com.larz1.afranalyzer.AfrAnalyzerSettings;
 import com.larz1.afranalyzer.LogValue;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-class CellToleranceFilterTest {
+public class TestCellToleranceFilter {
 
     @Test
-    void testCellToleranceOneEnabled() {
+    public void testCellToleranceOneEnabled() {
         AfrAnalyzerSettings as = new AfrAnalyzerSettings();
         as.cellToleranceEnabled = true;
         as.cellTolerance = 1.0;
@@ -29,7 +28,7 @@ class CellToleranceFilterTest {
     }
 
     @Test
-    void testCellToleranceWhateverEnabled() {
+    public void testCellToleranceWhateverEnabled() {
         AfrAnalyzerSettings as = new AfrAnalyzerSettings();
         as.cellToleranceEnabled = true;
         as.cellTolerance = 0.25;
@@ -53,17 +52,17 @@ class CellToleranceFilterTest {
         assertTrue(cellToleranceFilter.filter(logValue));
 
         logValue.setRpm(2500.0);
-        Assertions.assertTrue(cellToleranceFilter.filter(logValue));
+        assertTrue(cellToleranceFilter.filter(logValue));
 
         logValue.setRpm(2750.0);
-        Assertions.assertTrue(cellToleranceFilter.filter(logValue));
+        assertTrue(cellToleranceFilter.filter(logValue));
 
         logValue.setRpm(2751.0);
-        Assertions.assertFalse(cellToleranceFilter.filter(logValue));
+        assertFalse(cellToleranceFilter.filter(logValue));
     }
 
     @Test
-    void testCellToleranceDisabled() {
+    public void testCellToleranceDisabled() {
         AfrAnalyzerSettings as = new AfrAnalyzerSettings();
         as.cellToleranceEnabled = false;
         CellToleranceFilter cellToleranceFilter = new CellToleranceFilter(as);

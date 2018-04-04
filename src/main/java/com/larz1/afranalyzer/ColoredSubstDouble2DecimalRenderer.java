@@ -23,7 +23,7 @@ public class ColoredSubstDouble2DecimalRenderer implements TableCellRenderer {
         Component c = DEFAULT_RENDERER.getTableCellRendererComponent(table,
                 value, isSelected, hasFocus, row, column);
 
-        Number colorControlValue = null;
+        Number colorControlValue;
 
         if ((value != null) && (value instanceof Number)) {
             TableModel colorModel = ((TpsRpmTable) table).getColorControlModel();

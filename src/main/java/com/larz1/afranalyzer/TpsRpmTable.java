@@ -10,8 +10,7 @@ public class TpsRpmTable  extends JTable {
     private AfrAnalyzerSettings afrAnalyzerSettings;
 
     public TpsRpmTable(TableModel dm, AfrAnalyzerSettings afrAnalyzerSettings) {
-        super(dm);
-        this.afrAnalyzerSettings = afrAnalyzerSettings;
+        this(dm, null, false, afrAnalyzerSettings);
     }
 
     public TpsRpmTable(TableModel dm, TableModel colorControlModel, Boolean color, AfrAnalyzerSettings afrAnalyzerSettings) {
@@ -66,5 +65,5 @@ public class TpsRpmTable  extends JTable {
     public TableModel getColorControlModel() {
         return colorControlModel;
     }
-};
+}
 

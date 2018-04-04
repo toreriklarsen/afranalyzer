@@ -1,7 +1,7 @@
 package com.larz1.afranalyzer;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 
 public class CalcUtil {
@@ -24,7 +24,7 @@ public class CalcUtil {
         mean = calculateMean(logValues);
         stdDev = calculateStdDeviation(logValues, mean);
 
-        List<LogValue> timeWindowValues = new LinkedList<>();
+        List<LogValue> timeWindowValues = new ArrayList<>();
         double timeWindowAvg;
 
         for (LogValue afrVal : logValues) {
@@ -130,14 +130,13 @@ public class CalcUtil {
     //Dim gasvolume As Double = Math.PI * ((My.Settings.AutoTuneExhaustGasOffsetHeaderPipeDiameter - 2) / 2 / 10) ^ 2 * 4 * My.Settings.AutoTuneExhaustGasOffsetHeaderPipeLength / 10
 
     /**
-     * @param pipeDiameter - cm
-     * @param pipeLength   - cm
+     * @param pipeDiameter - mm
+     * @param pipeLength   - mm
      * @param ncylinders
      * @return
      */
     public static double pipeVolume(double pipeDiameter, double pipeLength, int ncylinders) {
-        return Math.PI * Math.pow(pipeDiameter / 2, 2) * ncylinders * pipeLength;
-        //return pipeCrossSection * ncylinders * pipeLength;
+        return Math.PI * Math.pow(pipeDiameter / 2, 2) * ncylinders * pipeLength / 10;
     }
 
     /**
@@ -164,7 +163,7 @@ public class CalcUtil {
         if ((rpm < 500) || (tps < 0.1)) return 0;
         double partialFlux = maxFlux * (rpm / maxEgo) * (tps / 100.0);
 
-        return (int)(pipeVolume * 1000.0 / (partialFlux + minFlux));
+        return (int) (pipeVolume * 1000.0 / (partialFlux + minFlux));
     }
 
     /**
@@ -180,5 +179,24 @@ public class CalcUtil {
     public static double afrBetweenT1andT2(double afrT1, double afrT2, int t1, int t2, int ego) {
         double fx = (afrT2 - afrT1) / (t2 - t1);
         return (afrT1 + (fx * (t2 - t1 - ego)));
+    }
+
+    public static int decideInterval(List<LogValue> lvs) {
+        int nSamples = 0;
+        if (lvs.size() > 5) {
+            nSamples = 5;
+        } else {
+            nSamples = lvs.size();
+        }
+
+        int prevTimeDiff = lvs.get(1).getTime() - lvs.get(0).getTime();
+        for (int i = 2; i < nSamples; i++) {
+            int tdiff = lvs.get(i).getTime() - lvs.get(i - 1).getTime();
+            if (tdiff != prevTimeDiff) {
+                throw new RuntimeException("Woa index=" + i);
+            }
+        }
+
+        return prevTimeDiff;
     }
 }

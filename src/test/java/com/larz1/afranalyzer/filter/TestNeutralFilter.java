@@ -2,14 +2,15 @@ package com.larz1.afranalyzer.filter;
 
 import com.larz1.afranalyzer.AfrAnalyzerSettings;
 import com.larz1.afranalyzer.LogValue;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-class NeutralFilterTest {
+public class TestNeutralFilter {
 
     @Test
-    void testNeutralFilterEnabled() {
+    public void testNeutralFilterEnabled() {
         AfrAnalyzerSettings as = new AfrAnalyzerSettings();
         as.neutralEnabled = true;
         NeutralFilter neutralFilter = new NeutralFilter(as);
@@ -18,8 +19,9 @@ class NeutralFilterTest {
         logValue.setGear(1.0);
         assertFalse(neutralFilter.filter(logValue));
     }
+
     @Test
-    void testNeutralFilterDisabled() {
+    public void testNeutralFilterDisabled() {
         AfrAnalyzerSettings as = new AfrAnalyzerSettings();
         as.neutralEnabled = false;
         NeutralFilter neutralFilter = new NeutralFilter(as);

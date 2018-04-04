@@ -2,15 +2,15 @@ package com.larz1.afranalyzer.filter;
 
 import com.larz1.afranalyzer.AfrAnalyzerSettings;
 import com.larz1.afranalyzer.LogValue;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-class MinAfrFilterTest {
+public class TestMinAfrFilter {
 
     @Test
-    void testMinFilterEnabled() {
+    public void testMinFilterEnabled() {
         AfrAnalyzerSettings as = new AfrAnalyzerSettings();
         as.minAfrEnabled = true;
         as.minAfr = 13.0;
@@ -20,9 +20,9 @@ class MinAfrFilterTest {
         as.minAfr = 15.0;
         assertTrue(MinAfrFilter.filter(logValue));
     }
-    
+
     @Test
-    void testMinFilterDisabled() {
+    public void testMinFilterDisabled() {
         AfrAnalyzerSettings as = new AfrAnalyzerSettings();
         as.minAfrEnabled = false;
         MinAfrFilter MinAfrFilter = new MinAfrFilter(as);

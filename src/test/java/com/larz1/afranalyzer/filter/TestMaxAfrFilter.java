@@ -2,15 +2,15 @@ package com.larz1.afranalyzer.filter;
 
 import com.larz1.afranalyzer.AfrAnalyzerSettings;
 import com.larz1.afranalyzer.LogValue;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-class MaxAfrFilterTest {
+public class TestMaxAfrFilter {
 
     @Test
-    void testMaxFilterEnabled() {
+    public void testMaxFilterEnabled() {
         AfrAnalyzerSettings as = new AfrAnalyzerSettings();
         as.maxAfrEnabled = true;
         as.maxAfr = 13.0;
@@ -22,7 +22,7 @@ class MaxAfrFilterTest {
     }
 
     @Test
-    void testMaxFilterDisabled() {
+    public void testMaxFilterDisabled() {
         AfrAnalyzerSettings as = new AfrAnalyzerSettings();
         as.maxAfrEnabled = false;
         MaxAfrFilter maxAfrFilter = new MaxAfrFilter(as);

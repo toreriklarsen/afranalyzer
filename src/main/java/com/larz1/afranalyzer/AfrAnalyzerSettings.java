@@ -51,4 +51,7 @@ public class AfrAnalyzerSettings {
 
     @Value("${tablecellprecision:1}")
     public Integer tableCellPrecision;
+
+    @Value("${egocompensationenabled:false}")
+    public Boolean egoCompensationEnabled;
 }

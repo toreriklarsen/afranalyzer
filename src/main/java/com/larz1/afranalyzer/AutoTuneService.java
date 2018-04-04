@@ -17,7 +17,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 import static com.larz1.afranalyzer.CalcUtil.findIndex;
@@ -175,7 +174,7 @@ public class AutoTuneService {
         ObjectReader oReader = mapper.readerFor(LogValue.class).with(schema);
 
         // read from file
-        List<LogValue> logValues = new LinkedList<>();
+        List<LogValue> logValues = new ArrayList<>();
         Reader reader = new FileReader(file);
         MappingIterator<LogValue> mi = oReader.readValues(reader);
         while (mi.hasNext()) {
@@ -293,6 +292,7 @@ public class AutoTuneService {
         return mArr;
     }
 
+    // todo check algo
     AdjAFRValue[][] calculateCompensation(AdjAFRValue[][] filteredMap, AdjAFRValue[][] targetMap) {
         AdjAFRValue[][] mArr = new AdjAFRValue[tpsArray.length][rpmArray.length];
 
@@ -333,7 +333,15 @@ public class AutoTuneService {
         return mArr;
     }
 
-    public void applyEgo(List<LogValue> logValues, Object... args) {
+    /**
+     * Apply exhaust gas offset.
+     * At the moment we are logging at 10 Hz, to be more precise, we are applying interpolation to get a new value
+     *
+     * @param logValues
+     * @param args
+     */
+    public void applyEgoNew(List<LogValue> logValues, Object... args) {
+        int egoCorrectionCount = 0;
         boolean fixedEgoFLag = false;
         int fixedEgo = 0;
         int ego;
@@ -341,49 +349,123 @@ public class AutoTuneService {
             fixedEgoFLag = true;
             fixedEgo = (int) args[0];
         }
-        //
+        int engineVolume = 998;
+        int maxRpm = 13550;
+        int pipeDiameter = 45;
+        int pipeLength = 950; //
+        int nCylinders = 4;
 
-        double maxFLux = CalcUtil.maxFlux(998, 13550);
-        double pipeVolume = CalcUtil.pipeVolume(45.0, 95.0, 4);
+        int sampleInterval = CalcUtil.decideInterval(logValues);
+
+        double maxFLux = CalcUtil.maxFlux(engineVolume, maxRpm);
+        double pipeVolume = CalcUtil.pipeVolume(pipeDiameter, pipeLength, nCylinders);
         double minFLux = CalcUtil.minFlux(pipeVolume, 250);
 
+
         for (int i = 0; i < logValues.size(); i++) {
-            //logger.trace("applyEgo logValue: {}", lv.get(i));
-            // look backwards
-            LogValue lv = logValues.get(i);
+
+            LogValue currentLv = logValues.get(i);
             if (!fixedEgoFLag) {
-                ego = CalcUtil.ego(250, maxFLux, minFLux, pipeVolume, lv.getRpm(), lv.getTps());
+                ego = CalcUtil.ego(250, maxFLux, minFLux, pipeVolume, currentLv.getRpm(), currentLv.getTps());
             } else {
                 ego = fixedEgo;
             }
 
-            System.out.println("at ego:" + ego + " time." + lv.getTime() + " rpm:" + lv.getRpm() + " tps:" + lv.getTps() + " afr:" + lv.getAfr());
+            logger.trace("at index:{} ego:{} time:{} rpm:{} tps:{} afr:{}", i, ego, currentLv.getTime(), currentLv.getRpm(), currentLv.getTps(), currentLv.getAfr());
+
+            int idxt2 = i - (ego / sampleInterval);
+            if (idxt2 < 1) {
+                continue;
+            }
+            int idxt1 = idxt2 - 1;
+            logger.trace("\tadjust ego:{} time:{} rpm:{} tps:{} afr:{} i:{}", ego, currentLv.getTime(), currentLv.getRpm(), currentLv.getTps(), currentLv.getAfr(), i);
+            logger.trace("idxt1:{} idxt2:{}", idxt1, idxt2);
+            int recalcEgo = currentLv.getTime() - ego - logValues.get(idxt1).getTime();
+            logger.trace("recalc ego:{}", recalcEgo);
+            double calculatedAfr = CalcUtil.afrBetweenT1andT2(logValues.get(idxt1).getUnadjustedAfr(), logValues.get(idxt2).getUnadjustedAfr(), (logValues.get(idxt1).getTime()),
+                    logValues.get(idxt2).getTime(), recalcEgo);
+            logger.trace("calc afr:{}", calculatedAfr);
+            logValues.get(i).setEgoOffsetApplied(true);
+            logValues.get(i).setAfr(calculatedAfr);
+            egoCorrectionCount++;
+        }
+
+
+        System.out.println("#LogValues: " + logValues.size());
+        System.out.println("#Egocorrection: " + egoCorrectionCount);
+
+    }
+
+    public List<LogValue> applyEgo(List<LogValue> logValues, Object... args) {
+        int egoCorrectionCount = 0;
+        boolean fixedEgoFLag = false;
+        int fixedEgo = 0;
+        int ego;
+        if (args.length == 1) {
+            fixedEgoFLag = true;
+            fixedEgo = (int) args[0];
+        }
+        int engineVolume = 998;
+        int maxRpm = 13550;
+        int pipeDiameter = 45;
+        int pipeLength = 950; //
+        int nCylinders = 4;
+
+        int sampleInterval = CalcUtil.decideInterval(logValues);
+
+        double maxFLux = CalcUtil.maxFlux(engineVolume, maxRpm);
+        double pipeVolume = CalcUtil.pipeVolume(pipeDiameter, pipeLength, nCylinders);
+        double minFLux = CalcUtil.minFlux(pipeVolume, 250);
+
+        List<LogValue> values = new ArrayList<>(logValues.size());
+        for (LogValue l : logValues) {
+            values.add(new LogValue(l));
+        }
+
+        for (int i = 0; i < values.size(); i++) {
+            LogValue currentLv = values.get(i);
+            if (!fixedEgoFLag) {
+                ego = CalcUtil.ego(250, maxFLux, minFLux, pipeVolume, currentLv.getRpm(), currentLv.getTps());
+            } else {
+                ego = fixedEgo;
+            }
+
+            logger.trace("at index:{} ego:{} time:{} rpm:{} tps:{} afr:{}", i, ego, currentLv.getTime(), currentLv.getRpm(), currentLv.getTps(), currentLv.getAfr());
+            // go backwards half a second
             for (int j = 1; j < 10 && i - j >= 0; j++) {
-                LogValue prevLv = logValues.get(i - j);
-                int timeDiff = lv.getTime() - prevLv.getTime();
+                LogValue prevLv = null;
+                if (ego <= sampleInterval) {
+                    prevLv = values.get(i - j);
+                } else {
+                    prevLv = values.get(i - j + 1);
+                }
+                int timeDiff = currentLv.getTime() - prevLv.getTime();
+                if (timeDiff < 0) {
+                    break;
+                }
                 if ((timeDiff * j) < ego) {
                     continue;
                 }
-                int idxt2 = i - j;
+                int idxt2 = i - j + 1;
                 int idxt1 = idxt2 - 1;
-                System.out.println("found ego:" + ego + " time." + lv.getTime() + " rpm:" + lv.getRpm() + " tps:" + lv.getTps() + " afr:" + lv.getAfr() + " i:" + i + " j:" + j);
-                System.out.println("idxt1: " + idxt1 + " idxt2: " + idxt2);
-                // fant, ligger mellom i og i-1
-                //
-                // now
-                int recalcEgo = lv.getTime() - ego - logValues.get(idxt1).getTime();
-                System.out.println("recalc ego: " + recalcEgo);
-                double calculatedAfr = CalcUtil.afrBetweenT1andT2(logValues.get(idxt1).getAfr(), logValues.get(idxt2).getAfr(), (logValues.get(idxt1).getTime()),
-                        logValues.get(idxt2).getTime(), lv.getTime() - (int) ego);
-                System.out.println("calc afr:" + calculatedAfr);
-                logValues.get(i).setAfr(calculatedAfr);
-                logValues.get(i).setEgoOffsetApplied(true);
+                logger.trace("\tadjust ego:" + ego + " time:" + currentLv.getTime() + " rpm:" + currentLv.getRpm() + " tps:" + currentLv.getTps() + " afr:" + currentLv.getAfr() + " i:" + i + " j:" + j);
+                logger.trace("\tidxt1: " + idxt1 + " idxt2: " + idxt2);
+                int recalcEgo = currentLv.getTime() - ego - values.get(idxt1).getTime();
+                logger.trace("recalc ego: {}", recalcEgo);
+                double calculatedAfr = CalcUtil.afrBetweenT1andT2(values.get(idxt1).getUnadjustedAfr(), values.get(idxt2).getUnadjustedAfr(), (values.get(idxt1).getTime()),
+                        values.get(idxt2).getTime(), recalcEgo);
+                logger.trace("calc afr: {}", calculatedAfr);
+                values.get(i).setEgoOffsetApplied(true);
+                values.get(i).setAfr(calculatedAfr);
+                egoCorrectionCount++;
                 break;
             }
         }
-        // let tilbake til tid < t2 - offset
-        // hvis interval brytes ikke gjøre noe
 
+        //System.out.println("#LogValues: " + values.size());
+        //System.out.println("#Egocorrection: " + egoCorrectionCount);
+
+        return values;
     }
 
     public void dumpAfrValues(List<LogValue> logValues) {

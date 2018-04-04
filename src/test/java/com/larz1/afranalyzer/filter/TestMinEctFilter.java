@@ -2,15 +2,15 @@ package com.larz1.afranalyzer.filter;
 
 import com.larz1.afranalyzer.AfrAnalyzerSettings;
 import com.larz1.afranalyzer.LogValue;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-class MinEctFilterTest {
+public class TestMinEctFilter {
 
     @Test
-    void testMinEctEnabled() {
+    public void testMinEctEnabled() {
         AfrAnalyzerSettings as = new AfrAnalyzerSettings();
         as.minEctEnabled = true;
         as.minEct = 80;
@@ -21,9 +21,9 @@ class MinEctFilterTest {
         as.minEct = 78;
         assertFalse(minEctFilter.filter(logValue));
     }
-    
+
     @Test
-    void testMinEctDisabled() {
+    public void testMinEctDisabled() {
         AfrAnalyzerSettings as = new AfrAnalyzerSettings();
         as.minEctEnabled = false;
         MinEctFilter minEctFilter = new MinEctFilter(as);

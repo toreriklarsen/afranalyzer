@@ -1,12 +1,13 @@
 package com.larz1.afranalyzer;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 public class AdjAFRValue {
     private double average;
     private int count = 0;
-    private List<LogValue> afrList = new LinkedList<>();
+    private List<LogValue> afrList = new ArrayList<>();
 
     public AdjAFRValue() {
     }

@@ -1,37 +1,43 @@
 package com.larz1.afranalyzer;
 
+// Feilen ligger her, må huske unadjusted AFR, slik at den kab benyttes i EGO calc, må også endre i Service
+
 public class LogValue {
     public double Time;
     public double ZX_RPM;
     public double ZX_TPS;
     public double ZX_GEAR;
     public double LLC_AFR;
-    public double ZC_ECT;
+    public double ZX_ECT;
     private boolean skip = false;
     private boolean egoOffsetApplied = false;
+    private double unadjustedAfr;
 
 
     public LogValue() {
     }
 
     public LogValue(int time, double ZX_RPM, double ZX_TPS, double LLC_AFR) {
-        Time = time/1000.0;
+        Time = time/1000.0d;
         this.ZX_RPM = ZX_RPM;
         this.ZX_TPS = ZX_TPS;
         this.LLC_AFR = LLC_AFR;
     }
 
     public LogValue(LogValue a) {
-        this.Time = a.getTime()/1000;
-        this.ZX_RPM = a.getRpm();
-        this.ZX_TPS = a.getTps();
-        this.ZX_GEAR = a.getGear();
-        this.LLC_AFR = a.getAfr();
+        this.Time = a.Time;
+        this.ZX_RPM = a.ZX_RPM;
+        this.ZX_TPS = a.ZX_TPS;
+        this.ZX_GEAR = a.ZX_GEAR;
+        this.LLC_AFR = a.LLC_AFR;
+        this.ZX_ECT = a.ZX_ECT;
         this.skip = a.isSkip();
+        this.egoOffsetApplied = a.isEgoOffsetApplied();
+        this.unadjustedAfr = a.getUnadjustedAfr();
     }
 
     public LogValue(int time, double ZX_RPM, double ZX_TPS, double ZX_GEAR, double LLC_AFR) {
-        this.Time = time/1000;
+        this.Time = time/1000.0d;
         this.ZX_RPM = ZX_RPM;
         this.ZX_TPS = ZX_TPS;
         this.ZX_GEAR = ZX_GEAR;
@@ -89,6 +95,9 @@ public class LogValue {
     }
 
     public void setAfr(double LLC_AFR) {
+        if (egoOffsetApplied) {
+            this.unadjustedAfr = this.LLC_AFR;
+        }
         this.LLC_AFR = LLC_AFR;
     }
 
@@ -109,11 +118,20 @@ public class LogValue {
     }
 
     public double getEct() {
-        return ZC_ECT;
+        return ZX_ECT;
     }
 
     public void setEct(double ZC_ECT) {
-        this.ZC_ECT = ZC_ECT;
+        this.ZX_ECT = ZC_ECT;
+    }
+
+    public double getUnadjustedAfr() {
+        if (egoOffsetApplied) {
+            return unadjustedAfr;
+        }
+
+        return this.LLC_AFR;
+
     }
 
     @Override

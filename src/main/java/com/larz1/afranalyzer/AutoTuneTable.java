@@ -69,6 +69,7 @@ public class AutoTuneTable extends JFrame {
 
     private JCheckBox quickShiftBox;
     private JCheckBox neutralBox;
+    private JCheckBox egoCompensationBox;
 
     private JTabbedPane tabbedPane;
 
@@ -127,7 +128,8 @@ public class AutoTuneTable extends JFrame {
         if (rVal == JFileChooser.APPROVE_OPTION) {
             try {
                 file = targetAfrFileChooser.getSelectedFile();
-                targetAfrModel.setMapArray(autoTuneService.readTargetAfrFile(file));
+                targetMapArray = autoTuneService.readTargetAfrFile(file);
+                targetAfrModel.setMapArray(targetMapArray);
                 logger.debug("Opening target afr file: {} ", file.getName());
             } catch (IOException ioe) {
                 logger.warn("Error opening target afr file");
@@ -141,8 +143,14 @@ public class AutoTuneTable extends JFrame {
     private void loadTestData() {
         logger.trace("load test data");
         try {
+            List<LogValue> lv = null;
             this.rawLogValues = autoTuneService.readAfrFile();
-            AdjAFRValue[][] rawMapArray = autoTuneService.convert2Map(rawLogValues);
+            if (afrAnalyzerSettings.egoCompensationEnabled) {
+                lv = autoTuneService.applyEgo(this.rawLogValues);
+            } else {
+                lv = this.rawLogValues;
+            }
+            AdjAFRValue[][] rawMapArray = autoTuneService.convert2Map(lv);
             afrModel.setMapArray(rawMapArray);
 
             this.targetMapArray = autoTuneService.readTargetAfrFile();
@@ -157,7 +165,14 @@ public class AutoTuneTable extends JFrame {
     private void filterAndRecalculate() {
         logger.trace("recalculate the correction values");
         // filter the raw data
-        this.filteredLogValues = autoTuneService.filter(rawLogValues);
+        List<LogValue> lv = null;
+        if (afrAnalyzerSettings.egoCompensationEnabled) {
+            lv = autoTuneService.applyEgo(this.rawLogValues);
+        } else {
+            lv = this.rawLogValues;
+        }
+
+        this.filteredLogValues = autoTuneService.filter(lv);
         AdjAFRValue[][] filteredMapArray = autoTuneService.convert2Map(filteredLogValues);
         filteredAfrModel.setMapArray(filteredMapArray);
 
@@ -264,6 +279,11 @@ public class AutoTuneTable extends JFrame {
         neutralBox.setToolTipText(tooltipText);
         neutralBox.addActionListener(ae -> neutralFilter());
 
+        tooltipText = "Do compensation for exhaust gas offset (EGO)";
+        egoCompensationBox = new JCheckBox("EGO compensation", afrAnalyzerSettings.egoCompensationEnabled);
+        egoCompensationBox.setToolTipText(tooltipText);
+        egoCompensationBox.addActionListener(ae -> egoCompensation());
+
         tooltipText = "Filter out values when when engine coolant temp is less than ";
         minEctBox = new JCheckBox("Min ECT:", afrAnalyzerSettings.minEctEnabled);
         minEctBox.setToolTipText(tooltipText);
@@ -318,6 +338,7 @@ public class AutoTuneTable extends JFrame {
 
         bp.add(quickShiftBox, "gap para, wrap");
         bp.add(neutralBox, "gap para, wrap");
+        bp.add(egoCompensationBox, "gap para, wrap");
 
 
         GroupLayout layout = new GroupLayout(contentPane);
@@ -353,61 +374,64 @@ public class AutoTuneTable extends JFrame {
 
     private void checkMaxAfrFilter() {
         afrAnalyzerSettings.maxAfrEnabled = maxAfrBox.isSelected();
-        loadTestData();
+        filterAndRecalculate();
     }
 
     private void checkMinAfrFilter() {
         afrAnalyzerSettings.minAfrEnabled = minAfrBox.isSelected();
-        loadTestData();
+        filterAndRecalculate();
     }
 
     private void quickShiftFilter() {
         afrAnalyzerSettings.quickshiftEnabled = quickShiftBox.isSelected();
-        loadTestData();
+        filterAndRecalculate();
     }
 
     private void neutralFilter() {
         afrAnalyzerSettings.neutralEnabled = neutralBox.isSelected();
-        loadTestData();
+        filterAndRecalculate();
+    }
+
+    private void egoCompensation() {
+        afrAnalyzerSettings.egoCompensationEnabled = egoCompensationBox.isSelected();
+        filterAndRecalculate();
     }
 
     private void maxAfrChanged() {
         afrAnalyzerSettings.maxAfr = new Double(maxAfrField.getText());
         if (maxAfrBox.isEnabled()) {
-            loadTestData();
+            filterAndRecalculate();
         }
     }
 
     private void minAfrChanged() {
         afrAnalyzerSettings.minAfr = new Double(minAfrField.getText());
         if (minAfrBox.isEnabled()) {
-            loadTestData();
+            filterAndRecalculate();
         }
     }
 
     private void minEctFilter() {
         afrAnalyzerSettings.minEctEnabled = minEctBox.isSelected();
-        // rerun filter, for now reload
-        loadTestData();
+        filterAndRecalculate();
     }
 
     private void minEctChanged() {
         afrAnalyzerSettings.minEct = new Integer(minEctField.getText());
         if (minEctBox.isEnabled()) {
-            loadTestData();
+            filterAndRecalculate();
         }
     }
 
     private void lowRpmFilter() {
         afrAnalyzerSettings.lowRpmEnabled = lowRpmBox.isSelected();
-        // rerun filter, for now reload
-        loadTestData();
+        filterAndRecalculate();
     }
 
     private void lowRpmChanged() {
         afrAnalyzerSettings.lowRpm = new Integer(lowRpmField.getText());
         if (lowRpmBox.isEnabled()) {
-            loadTestData();
+            filterAndRecalculate();
         }
     }
 }

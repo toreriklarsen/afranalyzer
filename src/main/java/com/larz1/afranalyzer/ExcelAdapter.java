@@ -91,8 +91,9 @@ public class ExcelAdapter implements ActionListener {
             }
 
             // grande hack
-            String str = sbf.toString();
-            stsel = new StringSelection(str.replace('.', ','));
+            //String str = sbf.toString();
+            //stsel = new StringSelection(str.replace('.', ','));
+            stsel = new StringSelection(sbf.toString());
             system = Toolkit.getDefaultToolkit().getSystemClipboard();
             system.setContents(stsel, stsel);
         }

@@ -2,15 +2,15 @@ package com.larz1.afranalyzer.filter;
 
 import com.larz1.afranalyzer.AfrAnalyzerSettings;
 import com.larz1.afranalyzer.LogValue;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-class MinRpmFilterTest {
+public class TestMinRpmFilter {
 
     @Test
-    void testLowRpmEnabled() {
+    public void testLowRpmEnabled() {
         AfrAnalyzerSettings as = new AfrAnalyzerSettings();
         as.lowRpmEnabled = true;
         as.lowRpm = 500;
@@ -20,9 +20,9 @@ class MinRpmFilterTest {
         as.lowRpm = 1000;
         assertTrue(minRpmFilter.filter(logValue));
     }
-    
+
     @Test
-    void testLowRpmDisabled() {
+    public void testLowRpmDisabled() {
         AfrAnalyzerSettings as = new AfrAnalyzerSettings();
         as.lowRpmEnabled = false;
         MinRpmFilter minRpmFilter = new MinRpmFilter(as);
