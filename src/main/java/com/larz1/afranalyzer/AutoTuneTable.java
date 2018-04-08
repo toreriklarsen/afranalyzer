@@ -50,6 +50,7 @@ public class AutoTuneTable extends JFrame {
     private JButton afrFileSelectButton;
     private JButton targetAfrFileSelectButton;
     private JButton calculateButton;
+    private JButton adjustButton;
 
     private JPanel contentPane;
 
@@ -187,6 +188,11 @@ public class AutoTuneTable extends JFrame {
         egoModel.setMapArray(egoMap);
     }
 
+    private void adjust() {
+        AdjAFRValue[][] adjMapArray = autoTuneService.calculateTotalCompensation(compAfrModel.getMapArray(), cpModel.getMapArray());
+        cpModel.setMapArray(adjMapArray);
+    }
+
     /**
      * Constructs an instance of the demo.
      */
@@ -199,6 +205,9 @@ public class AutoTuneTable extends JFrame {
 
         calculateButton = new JButton("calculate");
         calculateButton.addActionListener(ae -> filterAndRecalculate());
+
+        adjustButton= new JButton("adjust");
+        adjustButton.addActionListener(ae -> adjust());
 
         afrFileSelectButton = new JButton("select afr file");
         afrFileSelectButton.addActionListener(ae -> selectAfrFile());
@@ -248,6 +257,7 @@ public class AutoTuneTable extends JFrame {
         tabbedPane.addTab("Afr compensation (%)", compAfrTableScroll);
         tabbedPane.addTab("Afr C&P (%)", cpTableScroll);
         tabbedPane.addTab("Ego (ms)", egoTableScroll);
+        tabbedPane.addTab("Afr 3d", egoTableScroll);
 
         String tooltipText;
 
@@ -321,7 +331,7 @@ public class AutoTuneTable extends JFrame {
 
 
     private void addComponentsToContentPane() {
-        JPanel bp = new JPanel(new MigLayout());
+        JPanel bp = new JPanel(new MigLayout("debug"));
         bp.setBorder(BorderFactory.createTitledBorder("Filter"));
 
         bp.add(maxAfrBox, "gap para");
@@ -353,6 +363,7 @@ public class AutoTuneTable extends JFrame {
                                         .addComponent(afrFileSelectButton)
                                         .addComponent(testFileButton)
                                         .addComponent(calculateButton)
+                                        .addComponent(adjustButton)
                                         .addComponent(bp, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
                                 .addContainerGap())
         );
@@ -364,6 +375,7 @@ public class AutoTuneTable extends JFrame {
                                 .addComponent(afrFileSelectButton)
                                 .addComponent(testFileButton)
                                 .addComponent(calculateButton)
+                                .addComponent(adjustButton)
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE, 262, Short.MAX_VALUE)
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)

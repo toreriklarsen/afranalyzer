@@ -5,16 +5,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
 
-import javax.annotation.PostConstruct;
 import javax.swing.*;
 import java.awt.*;
-import java.io.IOException;
 
 /**
  * Created by tor.erik.larsen on 03/07/2017.
@@ -29,13 +26,7 @@ public class Application implements CommandLineRunner {
     private AutoTuneService autoTuneService;
 
     @Value("${afrfile:data/almeria-before.csv}")
-    private  String afrFile;
-
-    @PostConstruct
-    public void logSomething() {
-        logger.debug("Sample Debug Message");
-        logger.trace("Sample Trace Message");
-    }
+    private String afrFile;
 
 
     @Override
@@ -48,6 +39,11 @@ public class Application implements CommandLineRunner {
 
     public static void main(String[] args) {
         //UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+        try {
+            UIManager.setLookAndFeel(UIManager
+                    .getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+        }
 
         ConfigurableApplicationContext ctx = new SpringApplicationBuilder(Application.class)
                 .headless(false).web(false).run(args);

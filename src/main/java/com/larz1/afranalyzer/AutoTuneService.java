@@ -223,6 +223,7 @@ public class AutoTuneService {
         final int[] prevGear = {6};
         final int[] gear = {0};
         final int[] i = {0};
+        final int[] nFilteredOut = {0};
         List<LogValue> retList = new ArrayList<>(dataList.size());
 
         dataList.forEach(data -> {
@@ -231,23 +232,30 @@ public class AutoTuneService {
             data.setSkip(false);
 
             if (maxAfrFilter.filter(data)) {
+                nFilteredOut[0]++;
                 logger.trace("filtering out afr value, {} > max {}, tps:{} time:{}", data.getAfr(), afrAnalyzerSettings.maxAfr, data.getTps(), data.getTime());
             } else if (minAfrFilter.filter(data)) {
+                nFilteredOut[0]++;
                 //logValue.setSkip(true);
                 logger.trace("filtering out afr value, {} < max {}, tps:{} time:{}", data.getAfr(), afrAnalyzerSettings.minAfr, data.getTps(), data.getTime());
             } else if (minEctFilter.filter(data)) {
+                nFilteredOut[0]++;
                 //logValue.setSkip(true);
                 logger.trace("filtering out afr {} value,ECT {} < {}", data.getAfr(), data.getEct(), afrAnalyzerSettings.minEct);
             } else if (minRpmFilter.filter(data)) {
+                nFilteredOut[0]++;
                 //logValue.setSkip(true);
                 logger.trace("filtering out afr {} value,RPM {} < {}", data.getAfr(), data.getRpm(), afrAnalyzerSettings.lowRpm);
             } else if (neutralFilter.filter(data)) {
+                nFilteredOut[0]++;
                 //logValue.setSkip(true);
                 logger.trace("filtering out afr {} value, gear is 0(neutral)", data.getAfr());
             } else if (cellToleranceFilter.filter(data, afrAnalyzerSettings.cellTolerance)) {
+                nFilteredOut[0]++;
                 //logValue.setSkip(true);
                 logger.trace("filtering out afr {} value, rpm {} is outside tolerance {}, time: {}", data.getAfr(), data.getRpm(), 0.25D, data.getTime());
             } else if ((afrAnalyzerSettings.quickshiftEnabled) && (gear[0] > prevGear[0])) {
+                nFilteredOut[0]++;
                 // filter out to prev values
                 dataList.get(i[0] - 2).setSkip(true);
                 dataList.get(i[0] - 1).setSkip(true);
@@ -261,6 +269,7 @@ public class AutoTuneService {
             prevGear[0] = gear[0];
             i[0]++;
         });
+        System.out.println("#Filteredout: " + nFilteredOut[0]);
 
         return retList;
     }
@@ -268,11 +277,13 @@ public class AutoTuneService {
 
     AdjAFRValue[][] convert2Map(List<LogValue> logValues) {
         AdjAFRValue[][] mArr = new AdjAFRValue[tpsArray.length][rpmArray.length];
+        /*
         for (int i = 0; i < tpsArray.length; i++) {
             for (int j = 0; j < rpmArray.length; j++) {
                 mArr[i][j] = new AdjAFRValue();
             }
         }
+        */
 
         logValues.forEach(value -> {
             if (!value.isSkip()) {
@@ -288,6 +299,16 @@ public class AutoTuneService {
                 mArr[tpsInd][rpmInd].addAFRValue(value);
             }
         });
+
+        for (int i = 0; i < tpsArray.length; i++) {
+            for (int j = 0; j < rpmArray.length; j++) {
+                if (mArr[i][j] == null) {
+                    mArr[i][j] = new AdjAFRValue();
+                } else {
+                    mArr[i][j].calculateAverage();
+                }
+            }
+        }
 
         return mArr;
     }
@@ -313,6 +334,19 @@ public class AutoTuneService {
         }
 
         return mArr;
+    }
+
+    AdjAFRValue[][] calculateTotalCompensation(AdjAFRValue[][] compMap, AdjAFRValue[][] cpMap) {
+        //AdjAFRValue[][] mArr = new AdjAFRValue[tpsArray.length][rpmArray.length];
+
+        for (int i = 0; i < tpsArray.length; i++) {
+            for (int j = 0; j < rpmArray.length; j++) {
+                double newVal = compMap[i][j].getAverage() + cpMap[i][j].getAverage();
+                cpMap[i][j] = new AdjAFRValue(newVal);
+            }
+        }
+
+        return cpMap;
     }
 
     AdjAFRValue[][] calculateEgo() {
@@ -405,6 +439,8 @@ public class AutoTuneService {
             fixedEgoFLag = true;
             fixedEgo = (int) args[0];
         }
+
+        // todo these should come from setting
         int engineVolume = 998;
         int maxRpm = 13550;
         int pipeDiameter = 45;
@@ -462,8 +498,8 @@ public class AutoTuneService {
             }
         }
 
-        //System.out.println("#LogValues: " + values.size());
-        //System.out.println("#Egocorrection: " + egoCorrectionCount);
+        System.out.println("#LogValues: " + values.size());
+        System.out.println("#Egocorrected: " + egoCorrectionCount);
 
         return values;
     }

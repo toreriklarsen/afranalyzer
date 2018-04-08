@@ -5,6 +5,10 @@ import java.util.Arrays;
 import java.util.List;
 
 public class CalcUtil {
+    /**
+     * @param logValues
+     * @return
+     */
     public final static double calculateAverage(List<LogValue> logValues) {
         double totalAfr = 0.0;
         double totalCount = 0;
@@ -99,15 +103,24 @@ public class CalcUtil {
                 // Do nothing. This point is outside the array bounds
             } else {
                 // Find nearest point
+                /*
                 double d0 = Math.abs(array[idx - 1] - value);
                 double d1 = Math.abs(array[idx] - value);
-                //i = (d0 <= d1) ? idx - 1 : idx;
-                double length = array[idx] - array[idx - 1];
-                if (value <= array[idx] - (length * (1.0D - factor))) {
+                i = (d0 <= d1) ? idx - 1 : idx;
+                */
+                double mid = (array[idx] - array[idx - 1]) / 2;
+                if ((value <= array[idx] - mid) && (value > array[idx - 1])) {
                     i = idx - 1;
-                } else if (value > array[idx] - (length * factor)) {
+                } else if ((value > array[idx] - mid) && (value <= array[idx])) {
                     i = idx;
                 }
+                /*
+                if (value <= array[idx] - (diff * (1.0D - factor))) {
+                    i = idx - 1;
+                } else if (value > array[idx] - (diff * factor)) {
+                    i = idx;
+                }
+                */
             }
         } else {
             i = idx;
@@ -122,7 +135,7 @@ public class CalcUtil {
      * @return
      */
     public static double maxFlux(double engineVolume, int maxRpm) {
-        return (engineVolume / 2) * (maxRpm / 60);
+        return (engineVolume / 2.0) * ((double) maxRpm / 60.0);
     }
 
     // Er det en feil her, arealet diameter TODO NNBNBNB
@@ -136,13 +149,13 @@ public class CalcUtil {
      * @return
      */
     public static double pipeVolume(double pipeDiameter, double pipeLength, int ncylinders) {
-        return Math.PI * Math.pow(pipeDiameter / 2, 2) * ncylinders * pipeLength / 10;
+        return Math.PI * Math.pow(pipeDiameter / 2.0, 2) * (double) ncylinders * pipeLength / 10.0;
     }
 
     /**
      * @param pipeVolume in ccm
      * @param maxEgo
-     * @return
+     * @return TODO fix pipevol to mm all over
      */
     public static double minFlux(double pipeVolume, int maxEgo) {
         return (pipeVolume * 1000.0) / maxEgo;
@@ -167,7 +180,8 @@ public class CalcUtil {
     }
 
     /**
-     * Calculate new afr between t1 and t2
+     * Interpolate new afr between t1 and t2
+     * Todo check if using standard lib Math commons
      *
      * @param afrT1 - afr
      * @param afrT2 - afr

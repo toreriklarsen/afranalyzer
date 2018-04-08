@@ -13,8 +13,27 @@ import static org.junit.Assert.assertNull;
 
 public class TestCalcUtil {
     private static double[] rpmArray = {0.0, 1000.0, 2000.0, 3000.0, 4000.0, 5000.0, 6000.0, 7000.0, 8000.0, 9000.0, 10000.0, 11000.0, 12000.0, 12500.0, 13000.0, 13500.0, 14000.0};
+    private static double[] tpsArray = {0.0, 0.8, 2.3, 4.7, 7.8, 10.2, 14.8, 20.3, 29.7, 39.8, 50.0, 75.0, 100.0};
 
     private double d = 0.001;
+
+
+    @Test
+    public  void testFindIndexDouble() {
+        assertEquals(new Integer(0), CalcUtil.findIndex(tpsArray, 0.1));
+        assertEquals(new Integer(1), CalcUtil.findIndex(tpsArray, 0.8));
+        assertEquals(new Integer(2), CalcUtil.findIndex(tpsArray, 2.3));
+        assertEquals(new Integer(10), CalcUtil.findIndex(tpsArray, 50.0));
+    }
+
+    @Test
+    public  void testFindIndexDoubleBetween() {
+        //assertEquals(new Integer(1), CalcUtil.findIndex(tpsArray, 0.8));
+        assertEquals(new Integer(1), CalcUtil.findIndex(tpsArray, 0.81));
+        assertEquals(new Integer(1), CalcUtil.findIndex(tpsArray, 1.5));
+        assertEquals(new Integer(2), CalcUtil.findIndex(tpsArray, 1.6));
+    }
+
     @Test
     public  void testFindIndexOutSide() {
         assertNull(CalcUtil.findIndex(rpmArray, -0.01));

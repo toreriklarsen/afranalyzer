@@ -102,7 +102,7 @@ class AfrModel extends AbstractTableModel {
 
     public void setValueAt(Object value, int row, int col) {
         mapArray[row][col - 1] = new AdjAFRValue(new Double(value.toString()));
-        fireTableCellUpdated(row, col - 1); // informe any object about changes
+        fireTableCellUpdated(row, col - 1);
     }
 
     public AdjAFRValue[][] getMapArray() {

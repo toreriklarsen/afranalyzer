@@ -34,6 +34,16 @@ public class AdjAFRValue {
         incAverage(value.getAfr());
     }
 
+    public void clear() {
+        this.count = 0;
+        this.afrList.clear();
+    }
+
+    public void calculateAverage() {
+        this.average = CalcUtil.calculateAverage(afrList);
+        this.count = afrList.size();
+    }
+
     @Override
     public String toString() {
         return "AdjAFRValue{" +

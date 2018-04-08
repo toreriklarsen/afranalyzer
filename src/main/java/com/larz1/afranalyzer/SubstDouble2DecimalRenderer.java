@@ -22,7 +22,7 @@ public class SubstDouble2DecimalRenderer extends DefaultTableCellRenderer {
 
     @Override
     public void setValue(Object value) {
-        if ((value != null) && (value instanceof Number)) {
+        if (value instanceof Number) {
             numberValue = (Number) value;
             value = nf.format(numberValue.doubleValue());
         }
