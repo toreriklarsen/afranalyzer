@@ -100,20 +100,21 @@ public class CalcUtil {
         if (idx < 0) {
             idx = -idx - 1;
             if (idx == 0 || idx >= array.length) {
+                System.out.println("skukke hit, value:" + value);
                 // Do nothing. This point is outside the array bounds
             } else {
                 // Find nearest point
-                /*
                 double d0 = Math.abs(array[idx - 1] - value);
                 double d1 = Math.abs(array[idx] - value);
                 i = (d0 <= d1) ? idx - 1 : idx;
-                */
-                double mid = (array[idx] - array[idx - 1]) / 2;
-                if ((value <= array[idx] - mid) && (value > array[idx - 1])) {
+                /*
+                double mid = (array[idx] - array[idx - 1]) / 2 * factor;
+                if ((value <= (array[idx] - array[idx - 1]) - (array[idx] - mid)) && (value > array[idx - 1])) {
                     i = idx - 1;
-                } else if ((value > array[idx] - mid) && (value <= array[idx])) {
+                } else if ((value > array[idx - 1] - mid) && (value <= array[idx])) {
                     i = idx;
                 }
+                */
                 /*
                 if (value <= array[idx] - (diff * (1.0D - factor))) {
                     i = idx - 1;

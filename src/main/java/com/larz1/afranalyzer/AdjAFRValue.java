@@ -7,6 +7,7 @@ import java.util.List;
 public class AdjAFRValue {
     private double average;
     private int count = 0;
+    private boolean relevant = true;
     private List<LogValue> afrList = new ArrayList<>();
 
     public AdjAFRValue() {
@@ -39,9 +40,17 @@ public class AdjAFRValue {
         this.afrList.clear();
     }
 
+    public boolean isRelevant() {
+        return relevant;
+    }
+
+    public void setRelevant(boolean relevant) {
+        this.relevant = relevant;
+    }
+
     public void calculateAverage() {
-        this.average = CalcUtil.calculateAverage(afrList);
-        this.count = afrList.size();
+        //this.average = CalcUtil.calculateAverage(afrList);
+        //this.count = afrList.size();
     }
 
     @Override

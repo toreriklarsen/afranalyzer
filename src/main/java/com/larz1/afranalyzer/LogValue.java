@@ -12,6 +12,7 @@ public class LogValue {
     private boolean skip = false;
     private boolean egoOffsetApplied = false;
     private double unadjustedAfr;
+    private  int lineNr = 0;
 
 
     public LogValue() {
@@ -132,6 +133,14 @@ public class LogValue {
 
         return this.LLC_AFR;
 
+    }
+
+    public int getLineNr() {
+        return lineNr;
+    }
+
+    public void setLineNr(int lineNr) {
+        this.lineNr = lineNr;
     }
 
     @Override

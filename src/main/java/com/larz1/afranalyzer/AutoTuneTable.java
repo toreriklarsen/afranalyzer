@@ -106,6 +106,10 @@ public class AutoTuneTable extends JFrame {
                 file = afrFileChooser.getSelectedFile();
                 this.rawLogValues = autoTuneService.readAfrFile(file);
                 AdjAFRValue[][] rawMapArray = autoTuneService.convert2Map(rawLogValues);
+                if (!AutoTuneService.validateMapCount(rawLogValues, rawMapArray)) {
+                    System.out.println("ERROR");
+                }
+
                 afrModel.setMapArray(rawMapArray);
 
                 // filter the raw data
@@ -331,23 +335,23 @@ public class AutoTuneTable extends JFrame {
 
 
     private void addComponentsToContentPane() {
-        JPanel bp = new JPanel(new MigLayout("debug"));
+        JPanel bp = new JPanel(new MigLayout());
         bp.setBorder(BorderFactory.createTitledBorder("Filter"));
 
         bp.add(maxAfrBox, "gap para");
-        bp.add(maxAfrField, "span, growx, wrap");
+        bp.add(maxAfrField, "span, growx");
 
         bp.add(minAfrBox, "gap para");
         bp.add(minAfrField, "span, growx, wrap");
 
         bp.add(minEctBox, "gap para");
-        bp.add(minEctField, "span, growx, wrap");
+        bp.add(minEctField, "span, growx");
 
         bp.add(lowRpmBox, "gap para");
         bp.add(lowRpmField, "span, growx, wrap");
 
-        bp.add(quickShiftBox, "gap para, wrap");
-        bp.add(neutralBox, "gap para, wrap");
+        bp.add(quickShiftBox, "gap para");
+        bp.add(neutralBox, "gap para");
         bp.add(egoCompensationBox, "gap para, wrap");
 
 

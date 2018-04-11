@@ -6,9 +6,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 
 public class TestCalcUtil {
@@ -19,7 +17,7 @@ public class TestCalcUtil {
 
 
     @Test
-    public  void testFindIndexDouble() {
+    public void testFindIndexDouble() {
         assertEquals(new Integer(0), CalcUtil.findIndex(tpsArray, 0.1));
         assertEquals(new Integer(1), CalcUtil.findIndex(tpsArray, 0.8));
         assertEquals(new Integer(2), CalcUtil.findIndex(tpsArray, 2.3));
@@ -27,7 +25,7 @@ public class TestCalcUtil {
     }
 
     @Test
-    public  void testFindIndexDoubleBetween() {
+    public void testFindIndexDoubleBetween() {
         //assertEquals(new Integer(1), CalcUtil.findIndex(tpsArray, 0.8));
         assertEquals(new Integer(1), CalcUtil.findIndex(tpsArray, 0.81));
         assertEquals(new Integer(1), CalcUtil.findIndex(tpsArray, 1.5));
@@ -35,7 +33,7 @@ public class TestCalcUtil {
     }
 
     @Test
-    public  void testFindIndexOutSide() {
+    public void testFindIndexOutSide() {
         assertNull(CalcUtil.findIndex(rpmArray, -0.01));
         assertNull(CalcUtil.findIndex(rpmArray, 14001));
         assertNull(CalcUtil.findIndex(rpmArray, 14000.01));
@@ -54,8 +52,20 @@ public class TestCalcUtil {
     }
 
     @Test
+    public void testFindIndexWithinArea50() {
+        assertEquals(new Integer(0), CalcUtil.findIndex(rpmArray, 249.0, .5));
+        assertEquals(new Integer(0), CalcUtil.findIndex(rpmArray, 250.0, .5));
+        assertNull(CalcUtil.findIndex(rpmArray, 251.0, .5));
+        assertEquals(new Integer(1), CalcUtil.findIndex(rpmArray, 751.0, .5));
+        assertEquals(new Integer(1), CalcUtil.findIndex(rpmArray, 999, .5));
+        assertEquals(new Integer(1), CalcUtil.findIndex(rpmArray, 1000, .5));
+        assertEquals(new Integer(1), CalcUtil.findIndex(rpmArray, 1249, .5));
+    }
+
+    @Test
     public void testFindIndexWithinArea25() {
         assertEquals(new Integer(0), CalcUtil.findIndex(rpmArray, 249.0D, 0.25D));
+        assertEquals(new Integer(0), CalcUtil.findIndex(rpmArray, 255.0D, 0.25D));
         assertEquals(new Integer(1), CalcUtil.findIndex(rpmArray, 751.0D, 0.25D));
         assertEquals(new Integer(1), CalcUtil.findIndex(rpmArray, 1249.0D, 0.25D));
         assertEquals(new Integer(2), CalcUtil.findIndex(rpmArray, 1751.0D, 0.25D));

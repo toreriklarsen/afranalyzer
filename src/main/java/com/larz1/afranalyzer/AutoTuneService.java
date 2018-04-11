@@ -65,6 +65,50 @@ public class AutoTuneService {
     public AutoTuneService() {
     }
 
+    public static void setRelevantMaP(AdjAFRValue[][] bArr) {
+        for (int i = 0; i < tpsArray.length; i++) {
+            for (int j = 0; j < rpmArray.length; j++) {
+                bArr[i][j].setRelevant(Boolean.FALSE);
+            }
+        }
+        for (int i = 5; i < 8; i++) {
+            bArr[1][i].setRelevant(Boolean.TRUE);
+        }
+        for (int i = 5; i < 8; i++) {
+            bArr[2][i].setRelevant(Boolean.TRUE);
+        }
+        for (int i = 5; i < 9; i++) {
+            bArr[3][i].setRelevant(Boolean.TRUE);
+        }
+        for (int i = 5; i < 9; i++) {
+            bArr[4][i].setRelevant(Boolean.TRUE);
+        }
+        for (int i = 5; i < 10; i++) {
+            bArr[5][i].setRelevant(Boolean.TRUE);
+        }
+        for (int i = 5; i < 10; i++) {
+            bArr[6][i].setRelevant(Boolean.TRUE);
+        }
+        for (int i = 5; i < 10; i++) {
+            bArr[7][i].setRelevant(Boolean.TRUE);
+        }
+        for (int i = 5; i < 11; i++) {
+            bArr[8][i].setRelevant(Boolean.TRUE);
+        }
+        for (int i = 5; i < 12; i++) {
+            bArr[9][i].setRelevant(Boolean.TRUE);
+        }
+        for (int i = 5; i < rpmArray.length; i++) {
+            bArr[10][i].setRelevant(Boolean.TRUE);
+        }
+        for (int i = 5; i < rpmArray.length; i++) {
+            bArr[11][i].setRelevant(Boolean.TRUE);
+        }
+        for (int i = 5; i < rpmArray.length; i++) {
+            bArr[12][i].setRelevant(Boolean.TRUE);
+        }
+    }
+
     public void print(PRINT print, AdjAFRValue[][] mArr, String header) {
         Boolean[][] bArr = new Boolean[tpsArray.length][rpmArray.length];
         for (int i = 0; i < tpsArray.length; i++) {
@@ -162,12 +206,15 @@ public class AutoTuneService {
 
         CsvSchema schema = CsvSchema.builder()
                 .setSkipFirstDataRow(true)
+                .setAllowComments(true)
+                //.setUseHeader(true)
+                //.setReorderColumns(true)
                 .setColumnSeparator(',')
-                .addColumn("Time", CsvSchema.ColumnType.NUMBER)
-                .addColumn("ZX_RPM", CsvSchema.ColumnType.NUMBER)
-                .addColumn("ZX_TPS", CsvSchema.ColumnType.NUMBER)
-                .addColumn("ZX_GEAR", CsvSchema.ColumnType.NUMBER)
-                .addColumn("LLC_AFR", CsvSchema.ColumnType.NUMBER)
+                .addNumberColumn("Time")
+                .addNumberColumn("ZX_RPM")
+                .addNumberColumn("ZX_TPS")
+                .addNumberColumn("ZX_GEAR")
+                .addNumberColumn("LLC_AFR")
                 .build();
 
         CsvMapper mapper = new CsvMapper();
@@ -177,8 +224,11 @@ public class AutoTuneService {
         List<LogValue> logValues = new ArrayList<>();
         Reader reader = new FileReader(file);
         MappingIterator<LogValue> mi = oReader.readValues(reader);
+        int i = 2;
         while (mi.hasNext()) {
-            logValues.add(mi.next());
+            LogValue l = mi.next();
+            l.setLineNr(i);
+            logValues.add(l);
         }
 
         return logValues;
@@ -523,5 +573,17 @@ public class AutoTuneService {
                 System.out.print(ConsoleColors.RESET);
             }
         });
+    }
+
+    public static boolean validateMapCount(List<LogValue> lvs, AdjAFRValue[][] map) {
+        int count = 0;
+        for (int i = 0; i < tpsArray.length; i++) {
+            for (int j = 0; j < rpmArray.length; j++) {
+                count += map[i][j].getCount();
+            }
+        }
+
+        System.out.println("lvs.size:" + lvs.size() + " count:" + count);
+        return lvs.size() == count;
     }
 }

@@ -1,6 +1,7 @@
 package com.larz1.afranalyzer;
 
 import javax.swing.*;
+import javax.swing.border.*;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableModel;
 import java.awt.*;
@@ -38,6 +39,15 @@ public class ColoredSubstDouble2DecimalRenderer implements TableCellRenderer {
 
             c.setBackground(getCellBackgroundColor(colorControlValue.doubleValue()));
             c.setForeground(getCellForegroundColor(colorControlValue.doubleValue()));
+            if (column == 0) return c;
+            AfrModel am = (AfrModel)colorModel;
+            if (am == null) return c;
+            AdjAFRValue[][] mArr = am.getMapArray();
+            if (mArr == null) return c;
+
+            if (mArr[row][column - 1].isRelevant()) {
+                ((JComponent) c).setBorder(new MatteBorder(1, 1, 1, 1, Color.BLACK));
+            }
         }
 
         return c;
