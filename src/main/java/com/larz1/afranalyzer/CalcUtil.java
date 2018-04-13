@@ -90,7 +90,7 @@ public class CalcUtil {
     }
 
     public static Integer findIndex(final double[] array, final double value) {
-        return findIndex(array, value, 1.0D);
+        return findIndex(array, value, 1.0d);
     }
 
 
@@ -104,24 +104,17 @@ public class CalcUtil {
                 // Do nothing. This point is outside the array bounds
             } else {
                 // Find nearest point
-                double d0 = Math.abs(array[idx - 1] - value);
-                double d1 = Math.abs(array[idx] - value);
-                i = (d0 <= d1) ? idx - 1 : idx;
-                /*
-                double mid = (array[idx] - array[idx - 1]) / 2 * factor;
-                if ((value <= (array[idx] - array[idx - 1]) - (array[idx] - mid)) && (value > array[idx - 1])) {
+                //double d0 = Math.abs(array[idx - 1] - value);
+                //double d1 = Math.abs(array[idx] - value);
+                //i = (d0 <= d1) ? idx - 1 : idx;
+                double lngt = (array[idx] - array[idx - 1]) / 2 * factor;
+                double midLow = array[idx - 1] + lngt;
+                double midHigh = array[idx] - lngt;
+                if ((value >= array[idx - 1]) && (value < midLow)) {
                     i = idx - 1;
-                } else if ((value > array[idx - 1] - mid) && (value <= array[idx])) {
+                } else if ((value >= midHigh) && (value < array[idx])) {
                     i = idx;
                 }
-                */
-                /*
-                if (value <= array[idx] - (diff * (1.0D - factor))) {
-                    i = idx - 1;
-                } else if (value > array[idx] - (diff * factor)) {
-                    i = idx;
-                }
-                */
             }
         } else {
             i = idx;

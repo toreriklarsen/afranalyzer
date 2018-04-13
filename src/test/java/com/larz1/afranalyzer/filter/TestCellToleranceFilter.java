@@ -39,14 +39,17 @@ public class TestCellToleranceFilter {
         logValue.setRpm(2000.0);
         assertFalse(cellToleranceFilter.filter(logValue));
 
-        logValue.setRpm(2200.0);
+        logValue.setRpm(2124.0);
         assertFalse(cellToleranceFilter.filter(logValue));
+
+        logValue.setRpm(2200.0);
+        assertTrue(cellToleranceFilter.filter(logValue));
 
         logValue.setRpm(2249.0);
-        assertFalse(cellToleranceFilter.filter(logValue));
+        assertTrue(cellToleranceFilter.filter(logValue));
 
         logValue.setRpm(2250.0);
-        assertFalse(cellToleranceFilter.filter(logValue));
+        assertTrue(cellToleranceFilter.filter(logValue));
 
         logValue.setRpm(2251.0);
         assertTrue(cellToleranceFilter.filter(logValue));
@@ -58,7 +61,7 @@ public class TestCellToleranceFilter {
         assertTrue(cellToleranceFilter.filter(logValue));
 
         logValue.setRpm(2751.0);
-        assertFalse(cellToleranceFilter.filter(logValue));
+        assertTrue(cellToleranceFilter.filter(logValue));
     }
 
     @Test

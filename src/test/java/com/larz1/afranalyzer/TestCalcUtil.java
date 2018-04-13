@@ -17,6 +17,15 @@ public class TestCalcUtil {
 
 
     @Test
+    public void testFindIndexSpotOn() {
+        assertEquals(new Integer(1), CalcUtil.findIndex(rpmArray, 1000.0));
+        assertEquals(new Integer(15), CalcUtil.findIndex(rpmArray, 13500.0));
+        assertEquals(new Integer(16), CalcUtil.findIndex(rpmArray, 13750.0));
+        assertEquals(new Integer(5), CalcUtil.findIndex(tpsArray, 10.2));
+        assertEquals(new Integer(11), CalcUtil.findIndex(tpsArray, 75.0));
+    }
+
+    @Test
     public void testFindIndexDouble() {
         assertEquals(new Integer(0), CalcUtil.findIndex(tpsArray, 0.1));
         assertEquals(new Integer(1), CalcUtil.findIndex(tpsArray, 0.8));
@@ -54,27 +63,20 @@ public class TestCalcUtil {
     @Test
     public void testFindIndexWithinArea50() {
         assertEquals(new Integer(0), CalcUtil.findIndex(rpmArray, 249.0, .5));
-        assertEquals(new Integer(0), CalcUtil.findIndex(rpmArray, 250.0, .5));
+        assertNull(CalcUtil.findIndex(rpmArray, 250.0, .5));
         assertNull(CalcUtil.findIndex(rpmArray, 251.0, .5));
         assertEquals(new Integer(1), CalcUtil.findIndex(rpmArray, 751.0, .5));
         assertEquals(new Integer(1), CalcUtil.findIndex(rpmArray, 999, .5));
         assertEquals(new Integer(1), CalcUtil.findIndex(rpmArray, 1000, .5));
         assertEquals(new Integer(1), CalcUtil.findIndex(rpmArray, 1249, .5));
+        assertNull(CalcUtil.findIndex(rpmArray, 1250.0, .5));
     }
 
     @Test
     public void testFindIndexWithinArea25() {
-        assertEquals(new Integer(0), CalcUtil.findIndex(rpmArray, 249.0D, 0.25D));
-        assertEquals(new Integer(0), CalcUtil.findIndex(rpmArray, 255.0D, 0.25D));
-        assertEquals(new Integer(1), CalcUtil.findIndex(rpmArray, 751.0D, 0.25D));
-        assertEquals(new Integer(1), CalcUtil.findIndex(rpmArray, 1249.0D, 0.25D));
-        assertEquals(new Integer(2), CalcUtil.findIndex(rpmArray, 1751.0D, 0.25D));
-
-        assertEquals(new Integer(12), CalcUtil.findIndex(rpmArray, 12010.0D, 0.25D));
-        assertEquals(new Integer(12), CalcUtil.findIndex(rpmArray, 12125.0D, 0.25D));
-        assertNull(CalcUtil.findIndex(rpmArray, 12126.0D, 0.25D));
-
-
+        assertEquals(new Integer(0), CalcUtil.findIndex(rpmArray, 124, 0.25D));
+        assertNull(CalcUtil.findIndex(rpmArray, 125.01, 0.25D));
+        assertNull(CalcUtil.findIndex(rpmArray, 251.0, .5));
         assertNull(CalcUtil.findIndex(rpmArray, 14001.0D, 0.25D));
     }
 
