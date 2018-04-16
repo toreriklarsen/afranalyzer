@@ -1,22 +1,19 @@
 **Afranalyzer requirements**
 
-
-* Filtrere mer, opsjoner på alle filtre
-* OK Swing gui m. tabs og tabeller
-    * Tab comparing
-    * Relevant areas
-* save config yml spring
+* Egne filtre/options for autotune
+* Statistics in gui
+* Migrate all to MigLayout
+* Ny tab for Excel funksjonalitet
 * Data browser m tabell. Mekanismer for
     * Mekanismer for å finne overrun, quickgearshift osv.
     * Rare verdier AFR, søk?
     * utføre søk, vurder elastic
+* OK Swing gui m. tabs og tabeller
+    * Tab comparing
+* save config/project yml spring
 
 * Kompensere for EGO, 2 metoder: 1 fast rpm
 * Mere tester på EGO
-* Calc verdier etter paste fra Excel, smooth etter merging av verdier
-* Egne filtre/options for autotune
-* Options for max autotune %
-* Option for autotune strength
 * Smooth autotune percent values, hvordan smoothe?
 * Transition filter for endringer i TPS eller RPM
 * Verify afr cell averaging
@@ -25,7 +22,7 @@
 * Tester
     * Calculering
     * Service
-* Statistics in gui
+
 * Cell info in gui
 * Gui edit target file
 * Separator bug target file (Jackson)
@@ -36,12 +33,11 @@
 * Lese andre formater + et generelt
 * TPS headers
 * All double == should do Math.abs(a - b) < epsilon, where epsilon = 0.00000001d;
-* Migrate all to MigLayout
+
 * Porte til JavaFX?
 * Test CSV parsing
 
 **Bugs**
-* Test does not run i Maven
 * Values in fields should update when lost focus, not by enter
 
 

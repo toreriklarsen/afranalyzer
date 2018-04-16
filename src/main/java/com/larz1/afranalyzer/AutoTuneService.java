@@ -65,7 +65,7 @@ public class AutoTuneService {
     public AutoTuneService() {
     }
 
-    public static void setRelevantMaP(AdjAFRValue[][] bArr) {
+    public static void setRelevantMap(AdjAFRValue[][] bArr) {
         for (int i = 0; i < tpsArray.length; i++) {
             for (int j = 0; j < rpmArray.length; j++) {
                 bArr[i][j].setRelevant(Boolean.FALSE);
@@ -363,20 +363,41 @@ public class AutoTuneService {
         return mArr;
     }
 
-    // todo check algo
+    /**
+     * Calculate autotune compensation
+     *
+     * @param filteredMap
+     * @param targetMap
+     * @return
+     */
     AdjAFRValue[][] calculateCompensation(AdjAFRValue[][] filteredMap, AdjAFRValue[][] targetMap) {
         AdjAFRValue[][] mArr = new AdjAFRValue[tpsArray.length][rpmArray.length];
 
         for (int i = 0; i < tpsArray.length; i++) {
             for (int j = 0; j < rpmArray.length; j++) {
+
                 if ((filteredMap[i][j].getAverage() == 0.0) || (targetMap[i][j].getAverage() == 0.0)) {
                     mArr[i][j] = new AdjAFRValue(0.0);
                 } else {
+                    if (afrAnalyzerSettings.minValuesInCellEnabled) {
+                        if (filteredMap[i][j].getCount() < afrAnalyzerSettings.minValuesInCell) {
+                            mArr[i][j] = new AdjAFRValue(0.0);
+                            continue;
+                        }
+                    }
                     Double diff = (filteredMap[i][j].getAverage() / targetMap[i][j].getAverage()) - 1;
                     if (diff == -1) {
                         mArr[i][j] = new AdjAFRValue(0.0);
                     } else {
                         // nb rounding
+                        if (afrAnalyzerSettings.tuneStrengthEnabled) {
+                            diff = diff * afrAnalyzerSettings.tuneStrength;
+                        }
+                        if (afrAnalyzerSettings.maxtunepercentageEnabled) {
+                            if (diff > afrAnalyzerSettings.maxTunePercentage) {
+                                diff = afrAnalyzerSettings.maxTunePercentage;
+                            }
+                        }
                         mArr[i][j] = new AdjAFRValue(diff * 100);
                     }
                 }
@@ -386,17 +407,17 @@ public class AutoTuneService {
         return mArr;
     }
 
-    AdjAFRValue[][] calculateTotalCompensation(AdjAFRValue[][] compMap, AdjAFRValue[][] cpMap) {
-        //AdjAFRValue[][] mArr = new AdjAFRValue[tpsArray.length][rpmArray.length];
+    AdjAFRValue[][] calculateTotalCompensation(AdjAFRValue[][] compMap, AdjAFRValue[][] inputMap) {
+        AdjAFRValue[][] mArr = new AdjAFRValue[tpsArray.length][rpmArray.length];
 
         for (int i = 0; i < tpsArray.length; i++) {
             for (int j = 0; j < rpmArray.length; j++) {
-                double newVal = compMap[i][j].getAverage() + cpMap[i][j].getAverage();
-                cpMap[i][j] = new AdjAFRValue(newVal);
+                double newVal = compMap[i][j].getAverage() + inputMap[i][j].getAverage();
+                mArr[i][j] = new AdjAFRValue(newVal);
             }
         }
 
-        return cpMap;
+        return mArr;
     }
 
     AdjAFRValue[][] calculateEgo() {

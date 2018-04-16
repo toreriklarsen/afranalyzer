@@ -38,20 +38,32 @@ public class AfrAnalyzerSettings {
     @Value("${lowrpm:500}")
     public Integer lowRpm;
 
+    @Value("${egocompensationenabled:false}")
+    public Boolean egoCompensationEnabled;
+
     // used for autotune
-    @Value("${maxtunepercentageabled:false}")
+    @Value("${maxtunepercentagenabled:false}")
     public Boolean maxtunepercentageEnabled;
     @Value("${maxtunepercentage:0.1}")
     Double maxTunePercentage;
 
+    @Value("${tunestrengthabled:true}")
+    public Boolean tuneStrengthEnabled;
+    @Value("${tuneStrength:1.0}")
+    Double tuneStrength;
+
     @Value("${celltoleranceenabled:false}")
     public Boolean cellToleranceEnabled;
-    @Value("${cellTolerance:0.5}")
+    @Value("${cellTolerance:1.0}")
     public Double cellTolerance;
+
+    @Value("${minvaluesincellenabled:false}")
+    public Boolean minValuesInCellEnabled;
+    @Value("${minvaluesincell:2}")
+    public Integer minValuesInCell;
 
     @Value("${tablecellprecision:1}")
     public Integer tableCellPrecision;
 
-    @Value("${egocompensationenabled:false}")
-    public Boolean egoCompensationEnabled;
+
 }

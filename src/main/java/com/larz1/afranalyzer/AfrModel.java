@@ -32,7 +32,7 @@ class AfrModel extends AbstractTableModel {
 
     public void setMapArray(AdjAFRValue[][] mapArray) {
         this.mapArray = mapArray;
-        AutoTuneService.setRelevantMaP(mapArray);
+        AutoTuneService.setRelevantMap(mapArray);
         fireTableDataChanged();
 
     }

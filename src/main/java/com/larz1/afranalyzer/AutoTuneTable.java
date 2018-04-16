@@ -9,15 +9,8 @@ import org.springframework.stereotype.Controller;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableModel;
-import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
-import java.math.RoundingMode;
-import java.text.NumberFormat;
 import java.util.List;
 
 
@@ -38,7 +31,8 @@ public class AutoTuneTable extends JFrame {
     private AfrModel filteredAfrModel;
     private AfrModel targetAfrModel;
     private AfrModel compAfrModel;
-    private AfrModel cpModel;
+    private AfrModel sourceModel;
+    private AfrModel tuneModel;
     private AfrModel egoModel;
 
     /* UI Components */
@@ -58,14 +52,17 @@ public class AutoTuneTable extends JFrame {
     private JTable filteredAfrTable;
     private JTable targetAfrTable;
     private JTable compAfrTable;
-    private JTable cpTable;
+    private JTable cellCountTable;
+    private JTable sourceMapTable;
+    private JTable tuneMapTable;
     private JTable egoTable;
 
     private JScrollPane afrTableScroll;
     private JScrollPane filteredAfrTableScroll;
     private JScrollPane targetAfrTableScroll;
     private JScrollPane compAfrTableScroll;
-    private JScrollPane cpTableScroll;
+    private JScrollPane sourceTableScroll;
+    private JScrollPane tuneTableScroll;
     private JScrollPane egoTableScroll;
 
     private JCheckBox quickShiftBox;
@@ -91,6 +88,15 @@ public class AutoTuneTable extends JFrame {
     // for autotune
     protected JCheckBox maxTunePercentageBox;
     protected JTextField maxTunePercentageField;
+
+    protected JCheckBox tuneStrengthBox;
+    protected JTextField tuneStrengthField;
+
+    protected JCheckBox cellToleranceBox;
+    protected JTextField cellToleranceField;
+
+    protected JCheckBox minValuesInCellBox;
+    protected JTextField minValuesInCellField;
 
 
     private List<LogValue> rawLogValues;
@@ -186,15 +192,14 @@ public class AutoTuneTable extends JFrame {
         //autoTuneService.print(AutoTuneService.PRINT.AFR, compMap, "Compensation");
         compAfrModel.setMapArray(compMap);
 
-        // calculate the compensation
         AdjAFRValue[][] egoMap = autoTuneService.calculateEgo();
         //autoTuneService.print(AutoTuneService.PRINT.AFR, egoMap, "Ego");
         egoModel.setMapArray(egoMap);
     }
 
     private void adjust() {
-        AdjAFRValue[][] adjMapArray = autoTuneService.calculateTotalCompensation(compAfrModel.getMapArray(), cpModel.getMapArray());
-        cpModel.setMapArray(adjMapArray);
+        AdjAFRValue[][] adjMapArray = autoTuneService.calculateTotalCompensation(compAfrModel.getMapArray(), sourceModel.getMapArray());
+        tuneModel.setMapArray(adjMapArray);
     }
 
     /**
@@ -210,7 +215,7 @@ public class AutoTuneTable extends JFrame {
         calculateButton = new JButton("calculate");
         calculateButton.addActionListener(ae -> filterAndRecalculate());
 
-        adjustButton= new JButton("adjust");
+        adjustButton= new JButton("Tune");
         adjustButton.addActionListener(ae -> adjust());
 
         afrFileSelectButton = new JButton("select afr file");
@@ -231,35 +236,39 @@ public class AutoTuneTable extends JFrame {
         targetAfrModel = new AfrModel();
         compAfrModel = new AfrModel();
         egoModel = new AfrModel(false, true);
-        cpModel = new AfrModel(true);
+        sourceModel = new AfrModel(true);
+        tuneModel = new AfrModel(true);
         AdjAFRValue[][] mArr = new AdjAFRValue[AutoTuneService.tpsArray.length][AutoTuneService.rpmArray.length];
         for (int i = 0; i < AutoTuneService.tpsArray.length; i++) {
             for (int j = 0; j < AutoTuneService.rpmArray.length; j++) {
                 mArr[i][j] = new AdjAFRValue();
             }
         }
-        cpModel.setMapArray(mArr);
+        sourceModel.setMapArray(mArr);
 
         afrTable = new TpsRpmTable(afrModel, afrAnalyzerSettings);
         filteredAfrTable = new TpsRpmTable(filteredAfrModel, compAfrModel, true, afrAnalyzerSettings);
         targetAfrTable = new TpsRpmTable(targetAfrModel, afrAnalyzerSettings);
         compAfrTable = new TpsRpmTable(compAfrModel, null, true, afrAnalyzerSettings);
         egoTable = new TpsRpmTable(egoModel, afrAnalyzerSettings);
-        cpTable = new TpsRpmTable(cpModel, afrAnalyzerSettings);
+        sourceMapTable = new TpsRpmTable(sourceModel, afrAnalyzerSettings);
+        tuneMapTable = new TpsRpmTable(tuneModel, afrAnalyzerSettings);
 
         afrTableScroll = new JScrollPane(afrTable);
         filteredAfrTableScroll = new JScrollPane(filteredAfrTable);
         targetAfrTableScroll = new JScrollPane(targetAfrTable);
         compAfrTableScroll = new JScrollPane(compAfrTable);
         egoTableScroll = new JScrollPane(egoTable);
-        cpTableScroll = new JScrollPane(cpTable);
+        sourceTableScroll = new JScrollPane(sourceMapTable);
+        tuneTableScroll= new JScrollPane(tuneMapTable);
 
         tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Raw afr file", afrTableScroll);
         tabbedPane.addTab("Filtered afr file", filteredAfrTableScroll);
         tabbedPane.addTab("Target afr file", targetAfrTableScroll);
         tabbedPane.addTab("Afr compensation (%)", compAfrTableScroll);
-        tabbedPane.addTab("Afr C&P (%)", cpTableScroll);
+        tabbedPane.addTab("Source map", sourceTableScroll);
+        tabbedPane.addTab("Tuned map", tuneTableScroll);
         tabbedPane.addTab("Ego (ms)", egoTableScroll);
         tabbedPane.addTab("Afr 3d", egoTableScroll);
 
@@ -316,6 +325,42 @@ public class AutoTuneTable extends JFrame {
         lowRpmField.addActionListener(ae -> lowRpmChanged());
         lowRpmField.setToolTipText(tooltipText);
 
+        tooltipText = "Max tune percent 0.0 - 1.0";
+        maxTunePercentageBox = new JCheckBox("Max tune %", afrAnalyzerSettings.maxtunepercentageEnabled);
+        maxTunePercentageBox.setToolTipText(tooltipText);
+        maxTunePercentageBox.addActionListener(ae -> maxTune());
+        tooltipText = "Max tune %value";
+        maxTunePercentageField = new JTextField("" + afrAnalyzerSettings.maxTunePercentage, 4);
+        maxTunePercentageField.addActionListener(ae -> maxTuneChanged());
+        maxTunePercentageField.setToolTipText(tooltipText);
+
+        tooltipText = "Tune strength <= 1.0";
+        tuneStrengthBox = new JCheckBox("Tune strength", afrAnalyzerSettings.tuneStrengthEnabled);
+        tuneStrengthBox.setToolTipText(tooltipText);
+        tuneStrengthBox.addActionListener(ae -> tuneStrength());
+        tooltipText = "Tune strength %value";
+        tuneStrengthField = new JTextField("" + afrAnalyzerSettings.tuneStrength, 4);
+        tuneStrengthField.addActionListener(ae -> tuneStrengthChanged());
+        tuneStrengthField.setToolTipText(tooltipText);
+
+        tooltipText = "Controls the binning";
+        cellToleranceBox = new JCheckBox("Cell tolerance", afrAnalyzerSettings.cellToleranceEnabled);
+        cellToleranceBox.setToolTipText(tooltipText);
+        cellToleranceBox.addActionListener(ae -> cellTolerance());
+        tooltipText = "Binning tolerance %value";
+        cellToleranceField = new JTextField("" + afrAnalyzerSettings.cellTolerance, 4);
+        cellToleranceField.addActionListener(ae -> cellToleranceChanged());
+        cellToleranceField.setToolTipText(tooltipText);
+
+        tooltipText = "Min values in cell";
+        minValuesInCellBox = new JCheckBox("Min values in cell", afrAnalyzerSettings.minValuesInCellEnabled);
+        minValuesInCellBox.setToolTipText(tooltipText);
+        minValuesInCellBox.addActionListener(ae -> minValuesInCell());
+        tooltipText = "Min Values %value";
+        minValuesInCellField = new JTextField("" + afrAnalyzerSettings.minValuesInCell, 4);
+        minValuesInCellField.addActionListener(ae -> minValuesInCellChanged());
+        minValuesInCellField.setToolTipText(tooltipText);
+
         contentPane = new JPanel();
         addComponentsToContentPane();
         setContentPane(contentPane);
@@ -353,6 +398,19 @@ public class AutoTuneTable extends JFrame {
         bp.add(quickShiftBox, "gap para");
         bp.add(neutralBox, "gap para");
         bp.add(egoCompensationBox, "gap para, wrap");
+
+        bp.add(maxTunePercentageBox, "gap para");
+        bp.add(maxTunePercentageField, "span, growx, wrap");
+
+        bp.add(tuneStrengthBox, "gap para");
+        bp.add(tuneStrengthField, "span, growx, wrap");
+
+        bp.add(cellToleranceBox, "gap para");
+        bp.add(cellToleranceField, "span, growx, wrap");
+
+        bp.add(minValuesInCellBox, "gap para");
+        bp.add(minValuesInCellField, "span, growx, wrap");
+
 
 
         GroupLayout layout = new GroupLayout(contentPane);
@@ -450,4 +508,53 @@ public class AutoTuneTable extends JFrame {
             filterAndRecalculate();
         }
     }
+
+    private void maxTune() {
+        afrAnalyzerSettings.maxtunepercentageEnabled = maxTunePercentageBox.isSelected();
+        filterAndRecalculate();
+    }
+
+    private void maxTuneChanged() {
+        afrAnalyzerSettings.maxTunePercentage = new Double(maxTunePercentageField.getText());
+        if (maxTunePercentageBox.isEnabled()) {
+            filterAndRecalculate();
+        }
+    }
+
+    private void tuneStrength() {
+        afrAnalyzerSettings.tuneStrengthEnabled = tuneStrengthBox.isSelected();
+        filterAndRecalculate();
+    }
+
+    private void tuneStrengthChanged() {
+        afrAnalyzerSettings.tuneStrength = new Double(tuneStrengthField.getText());
+        if (tuneStrengthBox.isEnabled()) {
+            filterAndRecalculate();
+        }
+    }
+
+    private void cellTolerance() {
+        afrAnalyzerSettings.cellToleranceEnabled = cellToleranceBox.isSelected();
+        filterAndRecalculate();
+    }
+
+    private void cellToleranceChanged() {
+        afrAnalyzerSettings.cellTolerance = new Double(cellToleranceField.getText());
+        if (cellToleranceBox.isEnabled()) {
+            filterAndRecalculate();
+        }
+    }
+
+    private void minValuesInCell() {
+        afrAnalyzerSettings.minValuesInCellEnabled = minValuesInCellBox.isSelected();
+        filterAndRecalculate();
+    }
+
+    private void minValuesInCellChanged() {
+        afrAnalyzerSettings.minValuesInCell = new Integer(minValuesInCellField.getText());
+        if (minValuesInCellBox.isEnabled()) {
+            filterAndRecalculate();
+        }
+    }
+
 }

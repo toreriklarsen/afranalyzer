@@ -1,9 +1,8 @@
 # Afranalyzer
 
-## Todo
+## Intro
 
-
-One Paragraph of project description goes here
+The Afranalyzer is an autotune software for Kawasaki ZX10R 2011-2015 Kit ECU.
 
 ## Getting Started
 
@@ -11,10 +10,14 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-What things you need to install the software and how to install them
+You will need logging fra race sessions. In development the AIM Solo DL with the wideband sensor LCU-One has
+ been used. The was exported from Racestudio analysis. The following fields are exported: ZX_RPM, ZX_TPS, ZX_GEAR and LCC_AFR on time axis.
+ The sample resolution was 10Hz. 
 
 ```
-Give examples
+Autotune process. Sample data, multipple sessions from a race day. Prepare a target file. Import data and set your options for filtering.
+Copy the current fuel mapping form the Kawasaki FI_TOOL into source tab. Do the adjustment and copy data from the tune tab back to FI_TOOL.
+
 ```
 
 ### Installing
