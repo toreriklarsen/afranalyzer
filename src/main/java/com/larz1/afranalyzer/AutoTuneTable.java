@@ -102,14 +102,19 @@ public class AutoTuneTable extends JFrame {
     private List<LogValue> rawLogValues;
     private List<LogValue> filteredLogValues;
     private AdjAFRValue[][] targetMapArray;
+    private File lastDir;
 
     private void selectAfrFile() {
         File file;
 
+        if (lastDir != null) {
+            afrFileChooser.setCurrentDirectory(lastDir);
+        }
         int rVal = afrFileChooser.showDialog(AutoTuneTable.this, "Open");
         if (rVal == JFileChooser.APPROVE_OPTION) {
             try {
                 file = afrFileChooser.getSelectedFile();
+                lastDir = afrFileChooser.getCurrentDirectory();
                 this.rawLogValues = autoTuneService.readAfrFile(file);
                 AdjAFRValue[][] rawMapArray = autoTuneService.convert2Map(rawLogValues);
                 if (!AutoTuneService.validateMapCount(rawLogValues, rawMapArray)) {
@@ -135,10 +140,14 @@ public class AutoTuneTable extends JFrame {
     private void selectTargetAfrFile() {
         File file;
 
+        if (lastDir != null) {
+            afrFileChooser.setCurrentDirectory(lastDir);
+        }
         int rVal = targetAfrFileChooser.showDialog(AutoTuneTable.this, "Open");
         if (rVal == JFileChooser.APPROVE_OPTION) {
             try {
                 file = targetAfrFileChooser.getSelectedFile();
+                lastDir = afrFileChooser.getCurrentDirectory();
                 targetMapArray = autoTuneService.readTargetAfrFile(file);
                 targetAfrModel.setMapArray(targetMapArray);
                 logger.debug("Opening target afr file: {} ", file.getName());
@@ -270,7 +279,7 @@ public class AutoTuneTable extends JFrame {
         tabbedPane.addTab("Source map", sourceTableScroll);
         tabbedPane.addTab("Tuned map", tuneTableScroll);
         tabbedPane.addTab("Ego (ms)", egoTableScroll);
-        tabbedPane.addTab("Afr 3d", egoTableScroll);
+        //tabbedPane.addTab("Afr 3d", egoTableScroll);
 
         String tooltipText;
 
@@ -311,7 +320,7 @@ public class AutoTuneTable extends JFrame {
         minEctBox = new JCheckBox("Min ECT:", afrAnalyzerSettings.minEctEnabled);
         minEctBox.setToolTipText(tooltipText);
         minEctBox.addActionListener(ae -> minEctFilter());
-        tooltipText = "Min ECT filter value";
+        tooltipText = "Min ECT filter value:";
         minEctField = new JTextField("" + afrAnalyzerSettings.minEct, 4);
         minEctField.addActionListener(ae -> minEctChanged());
         minEctField.setToolTipText(tooltipText);
@@ -320,13 +329,13 @@ public class AutoTuneTable extends JFrame {
         lowRpmBox = new JCheckBox("Low RPM filter", afrAnalyzerSettings.minEctEnabled);
         lowRpmBox.setToolTipText(tooltipText);
         lowRpmBox.addActionListener(ae -> lowRpmFilter());
-        tooltipText = "Low RPM filter value";
+        tooltipText = "Low RPM filter value:";
         lowRpmField = new JTextField("" + afrAnalyzerSettings.lowRpm, 4);
         lowRpmField.addActionListener(ae -> lowRpmChanged());
         lowRpmField.setToolTipText(tooltipText);
 
         tooltipText = "Max tune percent 0.0 - 1.0";
-        maxTunePercentageBox = new JCheckBox("Max tune %", afrAnalyzerSettings.maxtunepercentageEnabled);
+        maxTunePercentageBox = new JCheckBox("Max tune %:", afrAnalyzerSettings.maxtunepercentageEnabled);
         maxTunePercentageBox.setToolTipText(tooltipText);
         maxTunePercentageBox.addActionListener(ae -> maxTune());
         tooltipText = "Max tune %value";
@@ -335,7 +344,7 @@ public class AutoTuneTable extends JFrame {
         maxTunePercentageField.setToolTipText(tooltipText);
 
         tooltipText = "Tune strength <= 1.0";
-        tuneStrengthBox = new JCheckBox("Tune strength", afrAnalyzerSettings.tuneStrengthEnabled);
+        tuneStrengthBox = new JCheckBox("Tune strength:", afrAnalyzerSettings.tuneStrengthEnabled);
         tuneStrengthBox.setToolTipText(tooltipText);
         tuneStrengthBox.addActionListener(ae -> tuneStrength());
         tooltipText = "Tune strength %value";
@@ -383,35 +392,33 @@ public class AutoTuneTable extends JFrame {
         JPanel bp = new JPanel(new MigLayout());
         bp.setBorder(BorderFactory.createTitledBorder("Filter"));
 
-        bp.add(maxAfrBox, "gap para");
-        bp.add(maxAfrField, "span, growx");
+        bp.add(maxAfrBox);
+        bp.add(maxAfrField);
 
-        bp.add(minAfrBox, "gap para");
-        bp.add(minAfrField, "span, growx, wrap");
+        bp.add(minAfrBox);
+        bp.add(minAfrField, "wrap");
 
-        bp.add(minEctBox, "gap para");
-        bp.add(minEctField, "span, growx");
+        bp.add(minEctBox);
+        bp.add(minEctField);
 
-        bp.add(lowRpmBox, "gap para");
-        bp.add(lowRpmField, "span, growx, wrap");
+        bp.add(lowRpmBox);
+        bp.add(lowRpmField, "wrap");
 
-        bp.add(quickShiftBox, "gap para");
-        bp.add(neutralBox, "gap para");
-        bp.add(egoCompensationBox, "gap para, wrap");
+        bp.add(quickShiftBox);
+        bp.add(neutralBox);
+        bp.add(egoCompensationBox, "wrap");
 
-        bp.add(maxTunePercentageBox, "gap para");
-        bp.add(maxTunePercentageField, "span, growx, wrap");
+        bp.add(maxTunePercentageBox);
+        bp.add(maxTunePercentageField);
 
-        bp.add(tuneStrengthBox, "gap para");
-        bp.add(tuneStrengthField, "span, growx, wrap");
+        bp.add(tuneStrengthBox);
+        bp.add(tuneStrengthField, "wrap");
 
-        bp.add(cellToleranceBox, "gap para");
-        bp.add(cellToleranceField, "span, growx, wrap");
+        bp.add(cellToleranceBox);
+        bp.add(cellToleranceField);
 
-        bp.add(minValuesInCellBox, "gap para");
-        bp.add(minValuesInCellField, "span, growx, wrap");
-
-
+        bp.add(minValuesInCellBox);
+        bp.add(minValuesInCellField, "wrap");
 
         GroupLayout layout = new GroupLayout(contentPane);
         contentPane.setLayout(layout);
@@ -420,13 +427,16 @@ public class AutoTuneTable extends JFrame {
                         .addGroup(layout.createSequentialGroup()
                                 .addContainerGap()
                                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE, 486, Short.MAX_VALUE)
+                                        .addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE, 600, Short.MAX_VALUE)
                                         .addComponent(targetAfrFileSelectButton)
                                         .addComponent(afrFileSelectButton)
                                         .addComponent(testFileButton)
                                         .addComponent(calculateButton)
                                         .addComponent(adjustButton)
-                                        .addComponent(bp, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                                        //.addComponent(bp, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
+                                .addComponent(bp))
+
+
                                 .addContainerGap())
         );
         layout.setVerticalGroup(
@@ -439,9 +449,10 @@ public class AutoTuneTable extends JFrame {
                                 .addComponent(calculateButton)
                                 .addComponent(adjustButton)
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE, 262, Short.MAX_VALUE)
+                                .addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
                                 .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(bp, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                //.addComponent(bp, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
+                                .addComponent(bp)
                                 .addContainerGap())
         );
     }

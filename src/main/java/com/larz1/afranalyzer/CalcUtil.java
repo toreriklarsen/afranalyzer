@@ -177,8 +177,8 @@ public class CalcUtil {
      * Interpolate new afr between t1 and t2
      * Todo check if using standard lib Math commons
      *
-     * @param afrT1 - afr
-     * @param afrT2 - afr
+     * @param afrT1 - afr by t1
+     * @param afrT2 - afr by t2
      * @param t1    - in ms
      * @param t2    - in ms
      * @param ego   - exhaust gas offset in ms

@@ -17,9 +17,9 @@ public class AfrAnalyzerSettings {
     @Value("${minafr:10.0}")
     public Double minAfr;
 
-    @Value("${maxafrenabled:false}")
+    @Value("${maxafrenabled:true}")
     public Boolean maxAfrEnabled;
-    @Value("${maxafr:15.0}")
+    @Value("${maxafr:17.0}")
     public Double maxAfr;
 
     @Value("${quickshiftenabled:false}")
@@ -38,7 +38,7 @@ public class AfrAnalyzerSettings {
     @Value("${lowrpm:500}")
     public Integer lowRpm;
 
-    @Value("${egocompensationenabled:false}")
+    @Value("${egocompensationenabled:true}")
     public Boolean egoCompensationEnabled;
 
     // used for autotune

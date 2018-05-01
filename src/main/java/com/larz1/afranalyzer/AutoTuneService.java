@@ -422,12 +422,16 @@ public class AutoTuneService {
 
     AdjAFRValue[][] calculateEgo() {
         AdjAFRValue[][] mArr = new AdjAFRValue[tpsArray.length][rpmArray.length];
+        // todo these should come from settings
+        int engineVolume = 998;
+        int maxRpm = 13550;
+        int pipeDiameter = 45;
+        int pipeLength = 950; //
+        int nCylinders = 4;
 
-        // todo set this in settings
-        double maxFLux = CalcUtil.maxFlux(998, 13550);
-        double pipeVolume = CalcUtil.pipeVolume(45.0, 95.0, 4);
+        double maxFLux = CalcUtil.maxFlux(engineVolume, maxRpm);
+        double pipeVolume = CalcUtil.pipeVolume(pipeDiameter, pipeLength, nCylinders);
         double minFLux = CalcUtil.minFlux(pipeVolume, 250);
-
 
         for (int i = 0; i < tpsArray.length; i++) {
             for (int j = 0; j < rpmArray.length; j++) {
@@ -439,13 +443,11 @@ public class AutoTuneService {
     }
 
     /**
-     * Apply exhaust gas offset.
-     * At the moment we are logging at 10 Hz, to be more precise, we are applying interpolation to get a new value
-     *
      * @param logValues
      * @param args
+     * @return
      */
-    public void applyEgoNew(List<LogValue> logValues, Object... args) {
+    public List<LogValue> applyEgo(List<LogValue> logValues, Object... args) {
         int egoCorrectionCount = 0;
         boolean fixedEgoFLag = false;
         int fixedEgo = 0;
@@ -454,6 +456,8 @@ public class AutoTuneService {
             fixedEgoFLag = true;
             fixedEgo = (int) args[0];
         }
+
+        // todo these should come from settings
         int engineVolume = 998;
         int maxRpm = 13550;
         int pipeDiameter = 45;
@@ -466,10 +470,13 @@ public class AutoTuneService {
         double pipeVolume = CalcUtil.pipeVolume(pipeDiameter, pipeLength, nCylinders);
         double minFLux = CalcUtil.minFlux(pipeVolume, 250);
 
+        List<LogValue> values = new ArrayList<>(logValues.size());
+        for (LogValue l : logValues) {
+            values.add(new LogValue(l));
+        }
 
-        for (int i = 0; i < logValues.size(); i++) {
-
-            LogValue currentLv = logValues.get(i);
+        for (int i = 0; i < values.size(); i++) {
+            LogValue currentLv = values.get(i);
             if (!fixedEgoFLag) {
                 ego = CalcUtil.ego(250, maxFLux, minFLux, pipeVolume, currentLv.getRpm(), currentLv.getTps());
             } else {
@@ -477,31 +484,32 @@ public class AutoTuneService {
             }
 
             logger.trace("at index:{} ego:{} time:{} rpm:{} tps:{} afr:{}", i, ego, currentLv.getTime(), currentLv.getRpm(), currentLv.getTps(), currentLv.getAfr());
-
-            int idxt2 = i - (ego / sampleInterval);
-            if (idxt2 < 1) {
+            int t2Index = i - ego / sampleInterval;
+            if (t2Index <= 0) {
                 continue;
             }
-            int idxt1 = idxt2 - 1;
-            logger.trace("\tadjust ego:{} time:{} rpm:{} tps:{} afr:{} i:{}", ego, currentLv.getTime(), currentLv.getRpm(), currentLv.getTps(), currentLv.getAfr(), i);
-            logger.trace("idxt1:{} idxt2:{}", idxt1, idxt2);
-            int recalcEgo = currentLv.getTime() - ego - logValues.get(idxt1).getTime();
-            logger.trace("recalc ego:{}", recalcEgo);
-            double calculatedAfr = CalcUtil.afrBetweenT1andT2(logValues.get(idxt1).getUnadjustedAfr(), logValues.get(idxt2).getUnadjustedAfr(), (logValues.get(idxt1).getTime()),
-                    logValues.get(idxt2).getTime(), recalcEgo);
-            logger.trace("calc afr:{}", calculatedAfr);
-            logValues.get(i).setEgoOffsetApplied(true);
-            logValues.get(i).setAfr(calculatedAfr);
+            int t1Index = t2Index - 1;
+            int restEgo = ego % sampleInterval;
+            double calculatedAfr = CalcUtil.afrBetweenT1andT2(values.get(t1Index).getUnadjustedAfr(), values.get(t2Index).getUnadjustedAfr(), values.get(t1Index).getTime(),
+                    values.get(t2Index).getTime(), restEgo);
+            currentLv.setEgoOffsetApplied(true);
+            currentLv.setEgoOffset(ego);
+            currentLv.setAfr(calculatedAfr);
             egoCorrectionCount++;
         }
 
+        System.out.println("#LogValues: " + values.size());
+        System.out.println("#Egocorrected: " + egoCorrectionCount);
 
-        System.out.println("#LogValues: " + logValues.size());
-        System.out.println("#Egocorrection: " + egoCorrectionCount);
-
+        return values;
     }
 
-    public List<LogValue> applyEgo(List<LogValue> logValues, Object... args) {
+    /**
+     * @param logValues
+     * @param args
+     * @return
+     */
+    public List<LogValue> applyEgoOld(List<LogValue> logValues, Object... args) {
         int egoCorrectionCount = 0;
         boolean fixedEgoFLag = false;
         int fixedEgo = 0;
@@ -511,7 +519,7 @@ public class AutoTuneService {
             fixedEgo = (int) args[0];
         }
 
-        // todo these should come from setting
+        // todo these should come from settings
         int engineVolume = 998;
         int maxRpm = 13550;
         int pipeDiameter = 45;
@@ -540,7 +548,7 @@ public class AutoTuneService {
             logger.trace("at index:{} ego:{} time:{} rpm:{} tps:{} afr:{}", i, ego, currentLv.getTime(), currentLv.getRpm(), currentLv.getTps(), currentLv.getAfr());
             // go backwards half a second
             for (int j = 1; j < 10 && i - j >= 0; j++) {
-                LogValue prevLv = null;
+                LogValue prevLv;
                 if (ego <= sampleInterval) {
                     prevLv = values.get(i - j);
                 } else {
@@ -563,6 +571,7 @@ public class AutoTuneService {
                         values.get(idxt2).getTime(), recalcEgo);
                 logger.trace("calc afr: {}", calculatedAfr);
                 values.get(i).setEgoOffsetApplied(true);
+                values.get(i).setEgoOffset(ego);
                 values.get(i).setAfr(calculatedAfr);
                 egoCorrectionCount++;
                 break;
@@ -582,11 +591,13 @@ public class AutoTuneService {
                 System.out.print(ConsoleColors.RED_BACKGROUND);
             }
 
+            System.out.format("% 6d", value.getLineNr());
             System.out.format("% 8d", value.getTime());
             System.out.format("% 7.0f", value.getRpm());
             System.out.format("% 5.1f", value.getTps());
             System.out.format("% 5.2f", value.getAfr());
             System.out.format("% 3.1f", value.getGear());
+            System.out.format("% 6d", value.getEgoOffset());
             System.out.print(" " + value.isEgoOffsetApplied());
             System.out.println();
 

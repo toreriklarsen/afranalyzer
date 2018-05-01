@@ -11,15 +11,16 @@ public class LogValue {
     public double ZX_ECT;
     private boolean skip = false;
     private boolean egoOffsetApplied = false;
+    private int egoOffset;
     private double unadjustedAfr;
-    private  int lineNr = 0;
+    private int lineNr = 0;
 
 
     public LogValue() {
     }
 
     public LogValue(int time, double ZX_RPM, double ZX_TPS, double LLC_AFR) {
-        Time = time/1000.0d;
+        Time = time / 1000.0d;
         this.ZX_RPM = ZX_RPM;
         this.ZX_TPS = ZX_TPS;
         this.LLC_AFR = LLC_AFR;
@@ -38,7 +39,7 @@ public class LogValue {
     }
 
     public LogValue(int time, double ZX_RPM, double ZX_TPS, double ZX_GEAR, double LLC_AFR) {
-        this.Time = time/1000.0d;
+        this.Time = time / 1000.0d;
         this.ZX_RPM = ZX_RPM;
         this.ZX_TPS = ZX_TPS;
         this.ZX_GEAR = ZX_GEAR;
@@ -53,6 +54,7 @@ public class LogValue {
 
     /**
      * Get time in millis
+     *
      * @return
      */
     public int getTime() {
@@ -61,10 +63,11 @@ public class LogValue {
 
     /**
      * Set time int millis
+     *
      * @param time
      */
     public void setTime(int time) {
-        Time = time/1000;
+        Time = time / 1000;
     }
 
     public double getRpm() {
@@ -141,6 +144,14 @@ public class LogValue {
 
     public void setLineNr(int lineNr) {
         this.lineNr = lineNr;
+    }
+
+    public int getEgoOffset() {
+        return egoOffset;
+    }
+
+    public void setEgoOffset(int egoOffset) {
+        this.egoOffset = egoOffset;
     }
 
     @Override
