@@ -15,9 +15,9 @@ import java.util.List;
 
 
 @Controller
-public class AutoTuneTable extends JFrame {
+public class AfrAnalyzer extends JFrame {
     private static final Logger logger = LoggerFactory
-            .getLogger(AutoTuneTable.class);
+            .getLogger(AfrAnalyzer.class);
 
     @Autowired
     private AfrAnalyzerSettings afrAnalyzerSettings;
@@ -110,7 +110,7 @@ public class AutoTuneTable extends JFrame {
         if (lastDir != null) {
             afrFileChooser.setCurrentDirectory(lastDir);
         }
-        int rVal = afrFileChooser.showDialog(AutoTuneTable.this, "Open");
+        int rVal = afrFileChooser.showDialog(AfrAnalyzer.this, "Open");
         if (rVal == JFileChooser.APPROVE_OPTION) {
             try {
                 file = afrFileChooser.getSelectedFile();
@@ -143,7 +143,7 @@ public class AutoTuneTable extends JFrame {
         if (lastDir != null) {
             afrFileChooser.setCurrentDirectory(lastDir);
         }
-        int rVal = targetAfrFileChooser.showDialog(AutoTuneTable.this, "Open");
+        int rVal = targetAfrFileChooser.showDialog(AfrAnalyzer.this, "Open");
         if (rVal == JFileChooser.APPROVE_OPTION) {
             try {
                 file = targetAfrFileChooser.getSelectedFile();
@@ -215,7 +215,7 @@ public class AutoTuneTable extends JFrame {
      * Constructs an instance of the demo.
      */
     @Autowired
-    public AutoTuneTable(AfrAnalyzerSettings afrAnalyzerSettings) {
+    public AfrAnalyzer(AfrAnalyzerSettings afrAnalyzerSettings) {
         super("AFRanalyzer 0.1");
 
         testFileButton = new JButton("load test files");
