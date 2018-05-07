@@ -2,26 +2,29 @@
 
 * Egne filtre/options for autotune
 * Statistics in gui
+* File info in gui
 * Migrate all to MigLayout
-* Ny tab for Excel funksjonalitet
+* Vise tabell bestanding
 * Data browser m tabell. Mekanismer for
     * Mekanismer for å finne overrun, quickgearshift osv.
     * Rare verdier AFR, søk?
     * utføre søk, vurder elastic
-* OK Swing gui m. tabs og tabeller
     * Tab comparing
-* save config/project yml spring
+    *
+* save config/project yml? spring?
 
 * Kompensere for EGO, 2 metoder: 1 fast rpm
-* Mere tester på EGO
+* Mere tester på EGO, har gjort en del, forbedret algoritme. Støtter 50Hz oppløsning
 * Smooth autotune percent values, hvordan smoothe?
 * Transition filter for endringer i TPS eller RPM
+* GPS decelleration filter
 * Verify afr cell averaging
-* Verify afr cell location, and should some be excluded?
-* Test Copy Paste to Excel fra %compensation on windows
+* Verify afr cell binning, and should some be excluded?
 * Tester
     * Calculering
     * Service
+    * CVS fil lesing
+    * Hele løypa, med Inndata, modeller, tuning og tuning result
 
 * Cell info in gui
 * Gui edit target file
@@ -39,6 +42,10 @@
 
 **Bugs**
 * Values in fields should update when lost focus, not by enter
+
+**Forslag**
+Hvordan vise forbedringer av tuningen? Sammenlikning?
+
 
 
 

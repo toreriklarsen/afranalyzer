@@ -49,7 +49,7 @@ public class Application implements CommandLineRunner {
                 .headless(false).web(false).run(args);
 
         EventQueue.invokeLater(() -> {
-            AutoTuneTable ex = ctx.getBean(AutoTuneTable.class);
+            AfrAnalyzer ex = ctx.getBean(AfrAnalyzer.class);
             ex.setVisible(true);
         });
     }
