@@ -1,28 +1,87 @@
 package com.larz1.afranalyzer;
 
 
+import com.larz1.afranalyzer.filter.*;
+import com.larz1.afranalyzer.ui.StatusBar;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.TypeExcludeFilter;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.junit4.SpringRunner;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.*;
 
+@RunWith(SpringRunner.class)
 public class TestAutoTuneService {
-    private double d = 0.001;
+    @TestConfiguration
+    static class AutotuneServiceTestContextConfiguration {
 
-    @Test
-    public void testTull() {
-        int i = 243;
-        int resten = i % 50;
-        System.out.println("resten:" + resten);
-        System.out.println("helt:" + i/50);
+        @Bean
+        public AutoTuneService autoTuneService() {
+            return new AutoTuneService();
+        }
+
+        @Bean
+        public AfrAnalyzerSettings afrAnalyzerSettings() {
+            return new AfrAnalyzerSettings();
+        }
+
+        @Bean
+        public MaxAfrFilter maxAfrFilter() {
+            return new MaxAfrFilter(afrAnalyzerSettings());
+        }
+
+        @Bean
+        public MinAfrFilter minAfrFilter() {
+            return new MinAfrFilter(afrAnalyzerSettings());
+        }
+
+        @Bean
+        public MinRpmFilter minRpmFilter() {
+            return new MinRpmFilter(afrAnalyzerSettings());
+        }
+
+        @Bean
+        public NeutralFilter neutralFilter() {
+            return new NeutralFilter(afrAnalyzerSettings());
+        }
+
+        @Bean
+        public MinEctFilter minEctFilter() {
+            return new MinEctFilter(afrAnalyzerSettings());
+        }
+
+        @Bean
+        public CellToleranceFilter  cellToleranceFilter() {
+            return new CellToleranceFilter(afrAnalyzerSettings());
+        }
+
+        @MockBean
+        private Status status;
     }
 
+    @Autowired
+    private AutoTuneService autoTuneService;
+
+    @Autowired
+    private AfrAnalyzerSettings afrAnalyzerSettings;
+
+    private double d = 0.00001;
 
     @Test
     public void testApplyEgo50Hz() {
-        AutoTuneService as = new AutoTuneService();
         List<LogValue> lvs = new ArrayList<>();
         lvs.add(new LogValue(1020, 1000, 2, 12));
         lvs.add(new LogValue(1040, 1100, 4, 13));
@@ -34,8 +93,8 @@ public class TestAutoTuneService {
         lvs.add(new LogValue(1160, 13500, 100.0, 19));
 
         //as.dumpAfrValues(lvs);
-        lvs = as.applyEgo(lvs);
-        as.dumpAfrValues(lvs);
+        lvs = autoTuneService.applyEgo(lvs);
+        //autoTuneService.dumpAfrValues(lvs);
 
         assertFalse(lvs.get(0).isEgoOffsetApplied());
         assertFalse(lvs.get(1).isEgoOffsetApplied());
@@ -50,7 +109,6 @@ public class TestAutoTuneService {
 
     @Test
     public void testApplyEgo() {
-        AutoTuneService as = new AutoTuneService();
         List<LogValue> lvs = new ArrayList<>();
         lvs.add(new LogValue(0, 1000, 2, 12));
         lvs.add(new LogValue(100, 1100, 4, 13));
@@ -60,7 +118,7 @@ public class TestAutoTuneService {
         lvs.add(new LogValue(500, 1600, 12, 17));
 
         //as.dumpAfrValues(lvs);
-        lvs = as.applyEgo(lvs);
+        lvs = autoTuneService.applyEgo(lvs);
         //as.dumpAfrValues(lvs);
 
         assertFalse(lvs.get(0).isEgoOffsetApplied());
@@ -74,7 +132,6 @@ public class TestAutoTuneService {
 
     @Test
     public void testApplyEgoFixedEgo50() {
-        AutoTuneService as = new AutoTuneService();
         List<LogValue> lvs = new ArrayList<>();
         lvs.add(new LogValue(0, 1000, 2, 12));
         lvs.add(new LogValue(100, 1100, 4, 13));
@@ -84,7 +141,7 @@ public class TestAutoTuneService {
         lvs.add(new LogValue(500, 1600, 12, 17));
 
         //as.dumpAfrValues(lvs);
-        lvs = as.applyEgo(lvs, 50);
+        lvs = autoTuneService.applyEgo(lvs, 50);
         //as.dumpAfrValues(lvs);
 
         assertFalse(lvs.get(0).isEgoOffsetApplied());
@@ -103,7 +160,6 @@ public class TestAutoTuneService {
 
     @Test
     public void testApplyEgoFixedEgo150() {
-        AutoTuneService as = new AutoTuneService();
         List<LogValue> lvs = new ArrayList<>();
         lvs.add(new LogValue(0, 1000, 2, 12));
         lvs.add(new LogValue(100, 1100, 4, 13));
@@ -113,8 +169,8 @@ public class TestAutoTuneService {
         lvs.add(new LogValue(500, 1600, 12, 17));
 
         //as.dumpAfrValues(lvs);
-        lvs = as.applyEgo(lvs, 150);
-        as.dumpAfrValues(lvs);
+        lvs = autoTuneService.applyEgo(lvs, 150);
+        //autoTuneService.dumpAfrValues(lvs);
 
         assertFalse(lvs.get(0).isEgoOffsetApplied());
         assertFalse(lvs.get(1).isEgoOffsetApplied());
@@ -130,7 +186,6 @@ public class TestAutoTuneService {
 
     @Test
     public void testApplyEgoMoreLaps() {
-        AutoTuneService as = new AutoTuneService();
         List<LogValue> lvs = new ArrayList<>();
         lvs.add(new LogValue(0, 1000, 2, 12));
         lvs.add(new LogValue(100, 1100, 4, 13));
@@ -145,9 +200,9 @@ public class TestAutoTuneService {
         lvs.add(new LogValue(400, 1400, 10, 16));
         lvs.add(new LogValue(500, 1600, 12, 17));
 
-        as.dumpAfrValues(lvs);
-        lvs = as.applyEgo(lvs);
-        as.dumpAfrValues(lvs);
+        //autoTuneService.dumpAfrValues(lvs);
+        lvs = autoTuneService.applyEgo(lvs);
+        //autoTuneService.dumpAfrValues(lvs);
 
         assertFalse(lvs.get(0).isEgoOffsetApplied());
         assertFalse(lvs.get(1).isEgoOffsetApplied());
@@ -156,5 +211,17 @@ public class TestAutoTuneService {
         assertTrue(lvs.get(4).isEgoOffsetApplied());
         assertTrue(lvs.get(5).isEgoOffsetApplied());
     }
+    @Test
+    public void testReadAfrFile() throws IOException {
+        File f = new File("src/test/resources/afrdata01.csv");
+        List<LogValue> lv = autoTuneService.readAfrFile(f);
+        assertEquals(0, lv.get(0).getTime());
+        assertEquals(10341.040039, lv.get(0).getRpm(), d);
+
+        assertEquals(100, lv.get(1).getTime());
+        assertEquals(200, lv.get(2).getTime());
+        assertEquals(300, lv.get(3).getTime());
+    }
+
 
 }

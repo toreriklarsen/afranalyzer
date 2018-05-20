@@ -65,5 +65,19 @@ public class AfrAnalyzerSettings {
     @Value("${tablecellprecision:1}")
     public Integer tableCellPrecision;
 
+    // engine settings
+    @Value("${enginevolume:998}")
+    public  Integer engineVolume;
 
+    @Value("${maxrpm:13550}")
+    public  Integer maxRpm;
+
+    @Value("${pipediameter:45}")
+    public  Integer pipeDiameter;
+
+    @Value("${pipelength:950}")
+    public  Integer pipeLength;
+
+    @Value("${ncylinders:4}")
+    public  Integer nCylinders;
 }

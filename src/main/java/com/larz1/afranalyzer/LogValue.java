@@ -3,7 +3,7 @@ package com.larz1.afranalyzer;
 // Feilen ligger her, må huske unadjusted AFR, slik at den kab benyttes i EGO calc, må også endre i Service
 
 public class LogValue {
-    public double Time;
+    public int Time;
     public double ZX_RPM;
     public double ZX_TPS;
     public double ZX_GEAR;
@@ -20,7 +20,7 @@ public class LogValue {
     }
 
     public LogValue(int time, double ZX_RPM, double ZX_TPS, double LLC_AFR) {
-        Time = time / 1000.0d;
+        Time = time;
         this.ZX_RPM = ZX_RPM;
         this.ZX_TPS = ZX_TPS;
         this.LLC_AFR = LLC_AFR;
@@ -39,7 +39,7 @@ public class LogValue {
     }
 
     public LogValue(int time, double ZX_RPM, double ZX_TPS, double ZX_GEAR, double LLC_AFR) {
-        this.Time = time / 1000.0d;
+        this.Time = time;
         this.ZX_RPM = ZX_RPM;
         this.ZX_TPS = ZX_TPS;
         this.ZX_GEAR = ZX_GEAR;
@@ -58,7 +58,7 @@ public class LogValue {
      * @return
      */
     public int getTime() {
-        return (int) (Time * 1000);
+        return Time;
     }
 
     /**
@@ -67,7 +67,7 @@ public class LogValue {
      * @param time
      */
     public void setTime(int time) {
-        Time = time / 1000;
+        Time = time;
     }
 
     public double getRpm() {

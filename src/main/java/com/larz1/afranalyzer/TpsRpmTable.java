@@ -4,7 +4,7 @@ import javax.swing.*;
 import javax.swing.table.TableModel;
 import java.awt.event.MouseEvent;
 
-public class TpsRpmTable  extends JTable {
+public class TpsRpmTable extends JTable {
     private TableModel colorControlModel;
     private Boolean color;
     private AfrAnalyzerSettings afrAnalyzerSettings;
@@ -25,7 +25,7 @@ public class TpsRpmTable  extends JTable {
 
         for (int i = 1; i <= 13; i++) {
             if (color) {
-                this.getColumn("" + (i - 1) * 1000).setCellRenderer(new ColoredSubstDouble2DecimalRenderer(afrAnalyzerSettings));
+                this.getColumn(String.valueOf((i - 1) * 1000)).setCellRenderer(new ColoredSubstDouble2DecimalRenderer(afrAnalyzerSettings));
             } else {
                 this.getColumn("" + (i - 1) * 1000).setCellRenderer(new SubstDouble2DecimalRenderer(afrAnalyzerSettings.tableCellPrecision));
             }

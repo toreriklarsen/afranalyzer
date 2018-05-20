@@ -9,7 +9,7 @@ public class CalcUtil {
      * @param logValues
      * @return
      */
-    public final static double calculateAverage(List<LogValue> logValues) {
+    public static double calculateAverage(List<LogValue> logValues) {
         double totalAfr = 0.0;
         double totalCount = 0;
         double avgAfr = 0.0;
@@ -190,7 +190,7 @@ public class CalcUtil {
     }
 
     public static int decideInterval(List<LogValue> lvs) {
-        int nSamples = 0;
+        int nSamples;
         if (lvs.size() > 5) {
             nSamples = 5;
         } else {

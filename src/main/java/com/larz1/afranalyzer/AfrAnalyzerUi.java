@@ -1,5 +1,6 @@
 package com.larz1.afranalyzer;
 
+import com.larz1.afranalyzer.ui.StatusBar;
 import net.miginfocom.swing.MigLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,27 +10,26 @@ import org.springframework.stereotype.Controller;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.filechooser.FileSystemView;
+import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
 
 @Controller
-public class AfrAnalyzer extends JFrame {
+public class AfrAnalyzerUi extends JFrame {
     private static final Logger logger = LoggerFactory
-            .getLogger(AfrAnalyzer.class);
+            .getLogger(AfrAnalyzerUi.class);
 
-    @Autowired
     private AfrAnalyzerSettings afrAnalyzerSettings;
-
-    //@Autowired
-    //private AfrModel afrModel;
-    @Autowired
     private AutoTuneService autoTuneService;
-    //@Autowired
     private AfrModel afrModel;
     private AfrModel filteredAfrModel;
     private AfrModel targetAfrModel;
+    private AfrModel cellCountModel;
     private AfrModel compAfrModel;
     private AfrModel sourceModel;
     private AfrModel tuneModel;
@@ -39,7 +39,7 @@ public class AfrAnalyzer extends JFrame {
     private JFileChooser afrFileChooser;
     private JFileChooser targetAfrFileChooser;
 
-    // button for test, select both files for convinience
+    // button for test, select both files for convenience
     private JButton testFileButton;
     private JButton afrFileSelectButton;
     private JButton targetAfrFileSelectButton;
@@ -64,41 +64,33 @@ public class AfrAnalyzer extends JFrame {
     private JScrollPane sourceTableScroll;
     private JScrollPane tuneTableScroll;
     private JScrollPane egoTableScroll;
+    private JScrollPane cellCountTableScroll;
 
     private JCheckBox quickShiftBox;
     private JCheckBox neutralBox;
     private JCheckBox egoCompensationBox;
 
     private JTabbedPane tabbedPane;
-
-
-    /* Protected so that they can be modified/disabled by subclasses */
-    protected JCheckBox maxAfrBox;
-    protected JTextField minAfrField;
-
-    protected JCheckBox minAfrBox;
-    protected JTextField maxAfrField;
-
-    protected JCheckBox minEctBox;
-    protected JTextField minEctField;
-
-    protected JCheckBox lowRpmBox;
-    protected JTextField lowRpmField;
+    private JCheckBox maxAfrBox;
+    private JTextField minAfrField;
+    private JCheckBox minAfrBox;
+    private JTextField maxAfrField;
+    private JCheckBox minEctBox;
+    private JTextField minEctField;
+    private JCheckBox lowRpmBox;
+    private JTextField lowRpmField;
 
     // for autotune
-    protected JCheckBox maxTunePercentageBox;
-    protected JTextField maxTunePercentageField;
+    private JCheckBox maxTunePercentageBox;
+    private JTextField maxTunePercentageField;
+    private JCheckBox tuneStrengthBox;
+    private JTextField tuneStrengthField;
+    private JCheckBox cellToleranceBox;
+    private JTextField cellToleranceField;
+    private JCheckBox minValuesInCellBox;
+    private JTextField minValuesInCellField;
 
-    protected JCheckBox tuneStrengthBox;
-    protected JTextField tuneStrengthField;
-
-    protected JCheckBox cellToleranceBox;
-    protected JTextField cellToleranceField;
-
-    protected JCheckBox minValuesInCellBox;
-    protected JTextField minValuesInCellField;
-
-
+    private StatusBar statusBar;
     private List<LogValue> rawLogValues;
     private List<LogValue> filteredLogValues;
     private AdjAFRValue[][] targetMapArray;
@@ -110,11 +102,11 @@ public class AfrAnalyzer extends JFrame {
         if (lastDir != null) {
             afrFileChooser.setCurrentDirectory(lastDir);
         }
-        int rVal = afrFileChooser.showDialog(AfrAnalyzer.this, "Open");
+        int rVal = afrFileChooser.showDialog(AfrAnalyzerUi.this, "Open");
         if (rVal == JFileChooser.APPROVE_OPTION) {
             try {
                 file = afrFileChooser.getSelectedFile();
-                lastDir = afrFileChooser.getCurrentDirectory();
+                lastDir = file.getParentFile();
                 this.rawLogValues = autoTuneService.readAfrFile(file);
                 AdjAFRValue[][] rawMapArray = autoTuneService.convert2Map(rawLogValues);
                 if (!AutoTuneService.validateMapCount(rawLogValues, rawMapArray)) {
@@ -143,14 +135,14 @@ public class AfrAnalyzer extends JFrame {
         if (lastDir != null) {
             afrFileChooser.setCurrentDirectory(lastDir);
         }
-        int rVal = targetAfrFileChooser.showDialog(AfrAnalyzer.this, "Open");
+        int rVal = targetAfrFileChooser.showDialog(AfrAnalyzerUi.this, "Open");
         if (rVal == JFileChooser.APPROVE_OPTION) {
             try {
                 file = targetAfrFileChooser.getSelectedFile();
-                lastDir = afrFileChooser.getCurrentDirectory();
+                lastDir = file.getParentFile();
                 targetMapArray = autoTuneService.readTargetAfrFile(file);
                 targetAfrModel.setMapArray(targetMapArray);
-                logger.debug("Opening target afr file: {} ", file.getName());
+                //logger.debug("Opening target afr file: {} ", file.getName());
             } catch (IOException ioe) {
                 logger.warn("Error opening target afr file");
             }
@@ -161,9 +153,9 @@ public class AfrAnalyzer extends JFrame {
 
 
     private void loadTestData() {
-        logger.trace("load test data");
+        logger.debug("load test data");
         try {
-            List<LogValue> lv = null;
+            List<LogValue> lv;
             this.rawLogValues = autoTuneService.readAfrFile();
             if (afrAnalyzerSettings.egoCompensationEnabled) {
                 lv = autoTuneService.applyEgo(this.rawLogValues);
@@ -183,7 +175,7 @@ public class AfrAnalyzer extends JFrame {
     }
 
     private void filterAndRecalculate() {
-        logger.trace("recalculate the correction values");
+        logger.debug("recalculate the correction values");
         // filter the raw data
         List<LogValue> lv = null;
         if (afrAnalyzerSettings.egoCompensationEnabled) {
@@ -204,28 +196,32 @@ public class AfrAnalyzer extends JFrame {
         AdjAFRValue[][] egoMap = autoTuneService.calculateEgo();
         //autoTuneService.print(AutoTuneService.PRINT.AFR, egoMap, "Ego");
         egoModel.setMapArray(egoMap);
+
+        AdjAFRValue[][] countMap = autoTuneService.createCountMap(filteredMapArray);
+        cellCountModel.setMapArray(countMap);
     }
 
-    private void adjust() {
+    private void tune() {
         AdjAFRValue[][] adjMapArray = autoTuneService.calculateTotalCompensation(compAfrModel.getMapArray(), sourceModel.getMapArray());
         tuneModel.setMapArray(adjMapArray);
     }
 
-    /**
-     * Constructs an instance of the demo.
-     */
     @Autowired
-    public AfrAnalyzer(AfrAnalyzerSettings afrAnalyzerSettings) {
-        super("AFRanalyzer 0.1");
+    public AfrAnalyzerUi(AfrAnalyzerSettings afrAnalyzerSettings, AutoTuneService autoTuneService, StatusBar statusBar) {
+        super("AFRanalyzer 0.8");
+
+        this.afrAnalyzerSettings = afrAnalyzerSettings;
+        this.autoTuneService = autoTuneService;
+        this.statusBar = statusBar;
 
         testFileButton = new JButton("load test files");
         testFileButton.addActionListener(ae -> loadTestData());
 
-        calculateButton = new JButton("calculate");
+        calculateButton = new JButton("Recalculate");
         calculateButton.addActionListener(ae -> filterAndRecalculate());
 
-        adjustButton= new JButton("Tune");
-        adjustButton.addActionListener(ae -> adjust());
+        adjustButton = new JButton("Tune");
+        adjustButton.addActionListener(ae -> tune());
 
         afrFileSelectButton = new JButton("select afr file");
         afrFileSelectButton.addActionListener(ae -> selectAfrFile());
@@ -244,6 +240,7 @@ public class AfrAnalyzer extends JFrame {
         filteredAfrModel = new AfrModel();
         targetAfrModel = new AfrModel();
         compAfrModel = new AfrModel();
+        cellCountModel = new AfrModel(false);
         egoModel = new AfrModel(false, true);
         sourceModel = new AfrModel(true);
         tuneModel = new AfrModel(true);
@@ -262,6 +259,7 @@ public class AfrAnalyzer extends JFrame {
         egoTable = new TpsRpmTable(egoModel, afrAnalyzerSettings);
         sourceMapTable = new TpsRpmTable(sourceModel, afrAnalyzerSettings);
         tuneMapTable = new TpsRpmTable(tuneModel, afrAnalyzerSettings);
+        cellCountTable = new TpsRpmTable(cellCountModel, afrAnalyzerSettings);
 
         afrTableScroll = new JScrollPane(afrTable);
         filteredAfrTableScroll = new JScrollPane(filteredAfrTable);
@@ -269,12 +267,14 @@ public class AfrAnalyzer extends JFrame {
         compAfrTableScroll = new JScrollPane(compAfrTable);
         egoTableScroll = new JScrollPane(egoTable);
         sourceTableScroll = new JScrollPane(sourceMapTable);
-        tuneTableScroll= new JScrollPane(tuneMapTable);
+        tuneTableScroll = new JScrollPane(tuneMapTable);
+        cellCountTableScroll = new JScrollPane(cellCountTable);
 
         tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Raw afr file", afrTableScroll);
         tabbedPane.addTab("Filtered afr file", filteredAfrTableScroll);
         tabbedPane.addTab("Target afr file", targetAfrTableScroll);
+        tabbedPane.addTab("Cell count", cellCountTableScroll);
         tabbedPane.addTab("Afr compensation (%)", compAfrTableScroll);
         tabbedPane.addTab("Source map", sourceTableScroll);
         tabbedPane.addTab("Tuned map", tuneTableScroll);
@@ -288,7 +288,7 @@ public class AfrAnalyzer extends JFrame {
         maxAfrBox.addActionListener(ae -> checkMaxAfrFilter());
         maxAfrBox.setToolTipText(tooltipText);
         tooltipText = "Max AFR filter value";
-        maxAfrField = new JTextField("" + afrAnalyzerSettings.maxAfr);
+        maxAfrField = new JTextField(String.valueOf(afrAnalyzerSettings.maxAfr));
         maxAfrField.addActionListener(ae -> maxAfrChanged());
         maxAfrField.setToolTipText(tooltipText);
 
@@ -371,11 +371,11 @@ public class AfrAnalyzer extends JFrame {
         minValuesInCellField.setToolTipText(tooltipText);
 
         contentPane = new JPanel();
+
         addComponentsToContentPane();
         setContentPane(contentPane);
-
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setSize(1000, 600);
+        setSize(1000, 740);
         setLocationRelativeTo(null);
     }
 
@@ -389,72 +389,106 @@ public class AfrAnalyzer extends JFrame {
 
 
     private void addComponentsToContentPane() {
-        JPanel bp = new JPanel(new MigLayout());
-        bp.setBorder(BorderFactory.createTitledBorder("Filter"));
+        JPanel topPanel = createTopPanel();
+        JPanel bottomPanel = createBottomPanel();
 
-        bp.add(maxAfrBox);
-        bp.add(maxAfrField);
+        setJMenuBar(createMenuBar());
+        contentPane.setLayout(new MigLayout("fill"));
+        contentPane.add(tabbedPane, "grow");
+        contentPane.add(topPanel, "north");
+        contentPane.add(statusBar, "south");
+        contentPane.add(bottomPanel, "south");
+    }
 
-        bp.add(minAfrBox);
-        bp.add(minAfrField, "wrap");
+    private JMenuBar createMenuBar() {
+        JMenuBar menuBar = new JMenuBar();
+        JMenu fileMenu = new JMenu("File");
+        JMenu toolMenu = new JMenu("Tools");
+        menuBar.add(fileMenu);
+        menuBar.add(toolMenu);
 
-        bp.add(minEctBox);
-        bp.add(minEctField);
+        JMenuItem openTargetFile = new JMenuItem("Open Target file");
+        openTargetFile.addActionListener(ae -> selectTargetAfrFile());
+        openTargetFile.setMnemonic(KeyEvent.VK_T);
+        openTargetFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_T,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 
-        bp.add(lowRpmBox);
-        bp.add(lowRpmField, "wrap");
-
-        bp.add(quickShiftBox);
-        bp.add(neutralBox);
-        bp.add(egoCompensationBox, "wrap");
-
-        bp.add(maxTunePercentageBox);
-        bp.add(maxTunePercentageField);
-
-        bp.add(tuneStrengthBox);
-        bp.add(tuneStrengthField, "wrap");
-
-        bp.add(cellToleranceBox);
-        bp.add(cellToleranceField);
-
-        bp.add(minValuesInCellBox);
-        bp.add(minValuesInCellField, "wrap");
-
-        GroupLayout layout = new GroupLayout(contentPane);
-        contentPane.setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                                        .addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE, 600, Short.MAX_VALUE)
-                                        .addComponent(targetAfrFileSelectButton)
-                                        .addComponent(afrFileSelectButton)
-                                        .addComponent(testFileButton)
-                                        .addComponent(calculateButton)
-                                        .addComponent(adjustButton)
-                                        //.addComponent(bp, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE))
-                                .addComponent(bp))
+        JMenuItem openAfrFile = new JMenuItem("Open Afr log file");
+        openAfrFile.addActionListener(ae -> selectAfrFile());
+        openAfrFile.setMnemonic(KeyEvent.VK_L);
+        openAfrFile.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_L,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
 
 
-                                .addContainerGap())
-        );
-        layout.setVerticalGroup(
-                layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup()
-                                .addContainerGap()
-                                .addComponent(targetAfrFileSelectButton)
-                                .addComponent(afrFileSelectButton)
-                                .addComponent(testFileButton)
-                                .addComponent(calculateButton)
-                                .addComponent(adjustButton)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(tabbedPane, GroupLayout.DEFAULT_SIZE, 400, Short.MAX_VALUE)
-                                .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED)
-                                //.addComponent(bp, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-                                .addComponent(bp)
-                                .addContainerGap())
-        );
+        JMenuItem exitAction = new JMenuItem("Exit");
+        exitAction.addActionListener(ae -> this.processWindowEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING)));
+        exitAction.setMnemonic(KeyEvent.VK_Q);
+        exitAction.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q,
+                Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+
+        fileMenu.add(openTargetFile);
+        fileMenu.add(openAfrFile);
+        fileMenu.add(exitAction);
+
+        JMenuItem calculateAction = new JMenuItem("Recalculate");
+        calculateAction.addActionListener(ae -> filterAndRecalculate());
+        calculateAction.setMnemonic(KeyEvent.VK_R);
+        calculateAction.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+
+
+        JMenuItem tuneAction = new JMenuItem("Tune");
+        tuneAction.addActionListener(ae -> tune());
+        tuneAction.setMnemonic(KeyEvent.VK_ENTER);
+        tuneAction.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, Toolkit.getDefaultToolkit().getMenuShortcutKeyMask()));
+
+        toolMenu.add(calculateAction);
+        toolMenu.add(tuneAction);
+
+
+        return menuBar;
+    }
+
+
+    private JPanel createBottomPanel() {
+        JPanel bottomPanel = new JPanel(new MigLayout());
+        bottomPanel.setBorder(BorderFactory.createTitledBorder("Filter"));
+
+        bottomPanel.add(maxAfrBox);
+        bottomPanel.add(maxAfrField);
+
+        bottomPanel.add(minAfrBox);
+        bottomPanel.add(minAfrField, "wrap");
+
+        bottomPanel.add(minEctBox);
+        bottomPanel.add(minEctField);
+
+        bottomPanel.add(lowRpmBox);
+        bottomPanel.add(lowRpmField, "wrap");
+
+        bottomPanel.add(quickShiftBox);
+        bottomPanel.add(neutralBox);
+        bottomPanel.add(egoCompensationBox, "wrap");
+
+        bottomPanel.add(maxTunePercentageBox);
+        bottomPanel.add(maxTunePercentageField);
+
+        bottomPanel.add(tuneStrengthBox);
+        bottomPanel.add(tuneStrengthField, "wrap");
+
+        bottomPanel.add(cellToleranceBox);
+        bottomPanel.add(cellToleranceField);
+
+        bottomPanel.add(minValuesInCellBox);
+        bottomPanel.add(minValuesInCellField, "wrap");
+        return bottomPanel;
+    }
+
+    private JPanel createTopPanel() {
+        JPanel topPanel = new JPanel(new MigLayout());
+        //topPanel.add(calculateButton);
+        //topPanel.add(adjustButton, "wrap");
+        topPanel.add(testFileButton, "wrap");
+        return topPanel;
     }
 
     private void checkMaxAfrFilter() {

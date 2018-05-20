@@ -6,7 +6,7 @@ import java.text.NumberFormat;
 
 public class SubstDouble2DecimalRenderer extends DefaultTableCellRenderer {
     private static final long serialVersionUID = 1L;
-    private int precision = 0;
+    private int precision;
     protected Number numberValue;
     protected NumberFormat nf;
 

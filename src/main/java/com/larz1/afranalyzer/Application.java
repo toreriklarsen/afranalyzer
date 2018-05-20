@@ -17,21 +17,14 @@ import java.awt.*;
  * Created by tor.erik.larsen on 03/07/2017.
  */
 @SpringBootApplication
-@EnableAutoConfiguration
+//@EnableAutoConfiguration
 public class Application implements CommandLineRunner {
     private static final Logger logger = LoggerFactory
             .getLogger(Application.class);
 
-    @Autowired
-    private AutoTuneService autoTuneService;
-
-    @Value("${afrfile:data/almeria-before.csv}")
-    private String afrFile;
-
-
     @Override
     public void run(String... args) {
-        logger.trace("Current dir using System:" + System.getProperty("user.dir"));
+        logger.debug("Current dir using System:" + System.getProperty("user.dir"));
         if (args.length > 0 && args[0].equals("exitcode")) {
             throw new ExitException();
         }
@@ -43,13 +36,14 @@ public class Application implements CommandLineRunner {
             UIManager.setLookAndFeel(UIManager
                     .getSystemLookAndFeelClassName());
         } catch (Exception e) {
+            logger.info("HOHO, not here");
         }
 
         ConfigurableApplicationContext ctx = new SpringApplicationBuilder(Application.class)
                 .headless(false).web(false).run(args);
 
         EventQueue.invokeLater(() -> {
-            AfrAnalyzer ex = ctx.getBean(AfrAnalyzer.class);
+            AfrAnalyzerUi ex = ctx.getBean(AfrAnalyzerUi.class);
             ex.setVisible(true);
         });
     }

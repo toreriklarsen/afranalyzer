@@ -49,6 +49,9 @@ public class AutoTuneService {
     @Autowired
     private MinEctFilter minEctFilter;
 
+    @Autowired
+    private Status status;
+
     public enum PRINT {
         AFR,
         COUNT
@@ -202,8 +205,29 @@ public class AutoTuneService {
     }
 
     public List<LogValue> readAfrFile(File file) throws IOException {
-        logger.trace("readAfrFile {}", file);
+        logger.debug("readAfrFile {}", file);
 
+        if (status != null) {
+            status.setAfrFileName(file.getName());
+        }
+
+        CsvLogValueParser clp = new CsvLogValueParser(file);
+        clp.parse();
+        List<LogValue> logValues = clp.getLogValues();
+
+        if (status != null) {
+            status.setNumlogValues(logValues.size());
+        }
+
+        return logValues;
+    }
+
+    public List<LogValue> readAfrFileOld(File file) throws IOException {
+        logger.debug("readAfrFile {}", file);
+
+        if (status != null) {
+            status.setAfrFileName(file.getName());
+        }
         CsvSchema schema = CsvSchema.builder()
                 .setSkipFirstDataRow(true)
                 .setAllowComments(true)
@@ -230,6 +254,9 @@ public class AutoTuneService {
             l.setLineNr(i);
             logValues.add(l);
         }
+        if (status != null) {
+            status.setNumlogValues(logValues.size());
+        }
 
         return logValues;
     }
@@ -244,8 +271,9 @@ public class AutoTuneService {
     }
 
     public AdjAFRValue[][] readTargetAfrFile(File csvFile) throws IOException {
-        logger.trace("readTargetAfrFile {}", csvFile);
+        logger.debug("readTargetAfrFile {}", csvFile);
 
+        //status.setAfrFileName(csvFile.getName());
         CsvMapper mapper = new CsvMapper();
         mapper.enable(CsvParser.Feature.WRAP_AS_ARRAY);
         String[][] rows = mapper.readValue(csvFile, String[][].class);
@@ -270,6 +298,7 @@ public class AutoTuneService {
      * @return
      */
     List<LogValue> filter(List<LogValue> dataList) {
+        logger.debug("filter");
         final int[] prevGear = {6};
         final int[] gear = {0};
         final int[] i = {0};
@@ -319,7 +348,10 @@ public class AutoTuneService {
             prevGear[0] = gear[0];
             i[0]++;
         });
-        System.out.println("#Filteredout: " + nFilteredOut[0]);
+        if (status != null) {
+            status.setNumFilteredValues(nFilteredOut[0]);
+        }
+        logger.debug("#Filteredout: {}", nFilteredOut[0]);
 
         return retList;
     }
@@ -420,14 +452,30 @@ public class AutoTuneService {
         return mArr;
     }
 
+    AdjAFRValue[][] createCountMap(AdjAFRValue[][] map) {
+        AdjAFRValue[][] mArr = new AdjAFRValue[tpsArray.length][rpmArray.length];
+
+        for (int i = 0; i < tpsArray.length; i++) {
+            for (int j = 0; j < rpmArray.length; j++) {
+                double newVal = map[i][j].getCount();
+                mArr[i][j] = new AdjAFRValue(newVal);
+            }
+        }
+
+        return mArr;
+    }
+
+    /**
+     * Calculate ego for each cell ion the map
+     * @return
+     */
     AdjAFRValue[][] calculateEgo() {
         AdjAFRValue[][] mArr = new AdjAFRValue[tpsArray.length][rpmArray.length];
-        // todo these should come from settings
-        int engineVolume = 998;
-        int maxRpm = 13550;
-        int pipeDiameter = 45;
-        int pipeLength = 950; //
-        int nCylinders = 4;
+        int engineVolume = afrAnalyzerSettings.engineVolume;
+        int maxRpm = afrAnalyzerSettings.maxRpm;
+        int pipeDiameter = afrAnalyzerSettings.pipeDiameter;
+        int pipeLength = afrAnalyzerSettings.pipeLength;
+        int nCylinders = afrAnalyzerSettings.nCylinders;
 
         double maxFLux = CalcUtil.maxFlux(engineVolume, maxRpm);
         double pipeVolume = CalcUtil.pipeVolume(pipeDiameter, pipeLength, nCylinders);
@@ -448,6 +496,7 @@ public class AutoTuneService {
      * @return
      */
     public List<LogValue> applyEgo(List<LogValue> logValues, Object... args) {
+        logger.debug("applyEgo");
         int egoCorrectionCount = 0;
         boolean fixedEgoFLag = false;
         int fixedEgo = 0;
@@ -457,14 +506,16 @@ public class AutoTuneService {
             fixedEgo = (int) args[0];
         }
 
-        // todo these should come from settings
-        int engineVolume = 998;
-        int maxRpm = 13550;
-        int pipeDiameter = 45;
-        int pipeLength = 950; //
-        int nCylinders = 4;
+        int engineVolume = afrAnalyzerSettings.engineVolume;
+        int maxRpm = afrAnalyzerSettings.maxRpm;
+        int pipeDiameter = afrAnalyzerSettings.pipeDiameter;
+        int pipeLength = afrAnalyzerSettings.pipeLength;
+        int nCylinders = afrAnalyzerSettings.nCylinders;
 
         int sampleInterval = CalcUtil.decideInterval(logValues);
+        if (status != null) {
+            status.setResolution(sampleInterval);
+        }
 
         double maxFLux = CalcUtil.maxFlux(engineVolume, maxRpm);
         double pipeVolume = CalcUtil.pipeVolume(pipeDiameter, pipeLength, nCylinders);
@@ -477,6 +528,11 @@ public class AutoTuneService {
 
         for (int i = 0; i < values.size(); i++) {
             LogValue currentLv = values.get(i);
+            if (currentLv.isEgoOffsetApplied()) {
+                logger.debug("ego is applied");
+                // make sure ego is not applied twice
+                continue;
+            }
             if (!fixedEgoFLag) {
                 ego = CalcUtil.ego(250, maxFLux, minFLux, pipeVolume, currentLv.getRpm(), currentLv.getTps());
             } else {
@@ -498,88 +554,8 @@ public class AutoTuneService {
             egoCorrectionCount++;
         }
 
-        System.out.println("#LogValues: " + values.size());
-        System.out.println("#Egocorrected: " + egoCorrectionCount);
-
-        return values;
-    }
-
-    /**
-     * @param logValues
-     * @param args
-     * @return
-     */
-    public List<LogValue> applyEgoOld(List<LogValue> logValues, Object... args) {
-        int egoCorrectionCount = 0;
-        boolean fixedEgoFLag = false;
-        int fixedEgo = 0;
-        int ego;
-        if (args.length == 1) {
-            fixedEgoFLag = true;
-            fixedEgo = (int) args[0];
-        }
-
-        // todo these should come from settings
-        int engineVolume = 998;
-        int maxRpm = 13550;
-        int pipeDiameter = 45;
-        int pipeLength = 950; //
-        int nCylinders = 4;
-
-        int sampleInterval = CalcUtil.decideInterval(logValues);
-
-        double maxFLux = CalcUtil.maxFlux(engineVolume, maxRpm);
-        double pipeVolume = CalcUtil.pipeVolume(pipeDiameter, pipeLength, nCylinders);
-        double minFLux = CalcUtil.minFlux(pipeVolume, 250);
-
-        List<LogValue> values = new ArrayList<>(logValues.size());
-        for (LogValue l : logValues) {
-            values.add(new LogValue(l));
-        }
-
-        for (int i = 0; i < values.size(); i++) {
-            LogValue currentLv = values.get(i);
-            if (!fixedEgoFLag) {
-                ego = CalcUtil.ego(250, maxFLux, minFLux, pipeVolume, currentLv.getRpm(), currentLv.getTps());
-            } else {
-                ego = fixedEgo;
-            }
-
-            logger.trace("at index:{} ego:{} time:{} rpm:{} tps:{} afr:{}", i, ego, currentLv.getTime(), currentLv.getRpm(), currentLv.getTps(), currentLv.getAfr());
-            // go backwards half a second
-            for (int j = 1; j < 10 && i - j >= 0; j++) {
-                LogValue prevLv;
-                if (ego <= sampleInterval) {
-                    prevLv = values.get(i - j);
-                } else {
-                    prevLv = values.get(i - j + 1);
-                }
-                int timeDiff = currentLv.getTime() - prevLv.getTime();
-                if (timeDiff < 0) {
-                    break;
-                }
-                if ((timeDiff * j) < ego) {
-                    continue;
-                }
-                int idxt2 = i - j + 1;
-                int idxt1 = idxt2 - 1;
-                logger.trace("\tadjust ego:" + ego + " time:" + currentLv.getTime() + " rpm:" + currentLv.getRpm() + " tps:" + currentLv.getTps() + " afr:" + currentLv.getAfr() + " i:" + i + " j:" + j);
-                logger.trace("\tidxt1: " + idxt1 + " idxt2: " + idxt2);
-                int recalcEgo = currentLv.getTime() - ego - values.get(idxt1).getTime();
-                logger.trace("recalc ego: {}", recalcEgo);
-                double calculatedAfr = CalcUtil.afrBetweenT1andT2(values.get(idxt1).getUnadjustedAfr(), values.get(idxt2).getUnadjustedAfr(), (values.get(idxt1).getTime()),
-                        values.get(idxt2).getTime(), recalcEgo);
-                logger.trace("calc afr: {}", calculatedAfr);
-                values.get(i).setEgoOffsetApplied(true);
-                values.get(i).setEgoOffset(ego);
-                values.get(i).setAfr(calculatedAfr);
-                egoCorrectionCount++;
-                break;
-            }
-        }
-
-        System.out.println("#LogValues: " + values.size());
-        System.out.println("#Egocorrected: " + egoCorrectionCount);
+        logger.debug("#LogValues: {}", values.size());
+        logger.debug("#Egocorrected: {}", egoCorrectionCount);
 
         return values;
     }
@@ -615,7 +591,8 @@ public class AutoTuneService {
             }
         }
 
-        System.out.println("lvs.size:" + lvs.size() + " count:" + count);
+        logger.debug("lvs.size:" + lvs.size() + " count:" + count);
+
         return lvs.size() == count;
     }
 }

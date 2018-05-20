@@ -5,8 +5,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.table.AbstractTableModel;
 
-//@Component
-//@Scope("prototype")
 class AfrModel extends AbstractTableModel {
     private static final Logger logger = LoggerFactory
             .getLogger(AfrModel.class);
@@ -71,7 +69,7 @@ class AfrModel extends AbstractTableModel {
         }
 
         if ((col > 0) && (col <= 13)) {
-            return "" + (col - 1) * 1000;
+            return String.valueOf((col - 1) * 1000);
         }
 
         switch (col) {
@@ -109,6 +107,4 @@ class AfrModel extends AbstractTableModel {
     public AdjAFRValue[][] getMapArray() {
         return mapArray;
     }
-
-
 }
