@@ -11,7 +11,7 @@ These instructions will get you a copy of the project up and running on your loc
 ### Prerequisites
 
 You will need logging fra race sessions. In development the AIM Solo DL with the wideband sensor LCU-One has
- been used. The was exported from Racestudio analysis. The following fields are exported: ZX_RPM, ZX_TPS, ZX_GEAR and LCC_AFR on time axis.
+ been used. The was exported from Racestudio analysis. The following fields are exported: rpm, tps, gear and LCC_AFR on time axis.
  The sample resolution was 10Hz. 
 
 ```

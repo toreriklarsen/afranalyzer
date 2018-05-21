@@ -14,7 +14,7 @@ public class TestNeutralFilter {
         AfrAnalyzerSettings as = new AfrAnalyzerSettings();
         as.neutralEnabled = true;
         NeutralFilter neutralFilter = new NeutralFilter(as);
-        LogValue logValue = new LogValue(0, 2000.0, 90.0, 0.0, 12.0);
+        LogValue logValue = new LogValue(0, 2000, 90.0, 0.0, 12.0);
         assertTrue(neutralFilter.filter(logValue));
         logValue.setGear(1.0);
         assertFalse(neutralFilter.filter(logValue));

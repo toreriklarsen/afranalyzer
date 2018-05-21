@@ -15,7 +15,7 @@ public class TestMinRpmFilter {
         as.lowRpmEnabled = true;
         as.lowRpm = 500;
         MinRpmFilter minRpmFilter = new MinRpmFilter(as);
-        LogValue logValue = new LogValue(0, 499.0, 90.0, 0.0, 14.0);
+        LogValue logValue = new LogValue(0, 499, 90.0, 0.0, 14.0);
         assertTrue(minRpmFilter.filter(logValue));
         as.lowRpm = 1000;
         assertTrue(minRpmFilter.filter(logValue));

@@ -91,9 +91,9 @@ public class TestCalcUtil {
     @Test
     public void testCalculateMean() {
         List<LogValue> ali = new ArrayList<>();
-        ali.add(new LogValue(100, 1000D, 50D, 1D, 2.5D));
-        ali.add(new LogValue(200, 1000D, 50D, 1D, 2.5D));
-        ali.add(new LogValue(300, 1000D, 50D, 1D, 2.5D));
+        ali.add(new LogValue(100, 1000, 50D, 1D, 2.5D));
+        ali.add(new LogValue(200, 1000, 50D, 1D, 2.5D));
+        ali.add(new LogValue(300, 1000, 50D, 1D, 2.5D));
 
         assertEquals(2.5D, CalcUtil.calculateMean(ali), d);
     }
@@ -101,8 +101,8 @@ public class TestCalcUtil {
     @Test
     public void testCalculateStdDeviation() {
         List<LogValue> ali = new ArrayList<>();
-        ali.add(new LogValue(100, 1000D, 50D, 1D, 2.5D));
-        ali.add(new LogValue(200, 1000D, 50D, 1D, 2.5D));
+        ali.add(new LogValue(100, 1000, 50D, 1D, 2.5D));
+        ali.add(new LogValue(200, 1000, 50D, 1D, 2.5D));
 
         assertEquals(0.0D, CalcUtil.calculateStdDeviation(ali, CalcUtil.calculateMean(ali)), d);
     }
@@ -110,9 +110,9 @@ public class TestCalcUtil {
     @Test
     public void testCalculateAverage() {
         List<LogValue> ali = new ArrayList<>();
-        ali.add(new LogValue(1000, 1000D, 50D, 1D, 2.5D));
-        ali.add(new LogValue(2000, 1000D, 50D, 1D, 2.5D));
-        ali.add(new LogValue(3000, 1000D, 50D, 1D, 2.5D));
+        ali.add(new LogValue(1000, 1000, 50D, 1D, 2.5D));
+        ali.add(new LogValue(2000, 1000, 50D, 1D, 2.5D));
+        ali.add(new LogValue(3000, 1000, 50D, 1D, 2.5D));
 
         assertEquals(2.5d, CalcUtil.calculateAverage(ali), d);
     }
@@ -120,16 +120,16 @@ public class TestCalcUtil {
     @Test
     public void testCalculateAverageOneValue() {
         List<LogValue> ali = new ArrayList<>();
-        ali.add(new LogValue(1000, 1000D, 50D, 1D, 2.5D));
+        ali.add(new LogValue(1000, 1000, 50D, 1D, 2.5D));
         assertEquals(2.5d, CalcUtil.calculateAverage(ali), d);
     }
 
     @Test
     public void testCalculateAverage3Values() {
         List<LogValue> ali = new ArrayList<>();
-        ali.add(new LogValue(1000, 1000D, 50D, 1D, 2.5D));
-        ali.add(new LogValue(2000, 1000D, 50D, 1D, 2.5D));
-        ali.add(new LogValue(3000, 1000D, 50D, 1D, 2.5D));
+        ali.add(new LogValue(1000, 1000, 50D, 1D, 2.5D));
+        ali.add(new LogValue(2000, 1000, 50D, 1D, 2.5D));
+        ali.add(new LogValue(3000, 1000, 50D, 1D, 2.5D));
 
         assertEquals(2.5D, CalcUtil.calculateAverage(ali), d);
     }
@@ -137,26 +137,26 @@ public class TestCalcUtil {
     @Test
     public void testCalculateAverageManyValues3Wins() {
         List<LogValue> ali = new ArrayList<>();
-        ali.add(new LogValue(1010, 1000D, 50D, 1D, 1D));
-        ali.add(new LogValue(1020, 1000D, 50D, 1D, 2D));
-        ali.add(new LogValue(1030, 1000D, 50D, 1D, 3D));
-        ali.add(new LogValue(1040, 1000D, 50D, 1D, 4D));
-        ali.add(new LogValue(1050, 1000D, 50D, 1D, 5D));
+        ali.add(new LogValue(1010, 1000, 50D, 1D, 1D));
+        ali.add(new LogValue(1020, 1000, 50D, 1D, 2D));
+        ali.add(new LogValue(1030, 1000, 50D, 1D, 3D));
+        ali.add(new LogValue(1040, 1000, 50D, 1D, 4D));
+        ali.add(new LogValue(1050, 1000, 50D, 1D, 5D));
 
         assertEquals(3D, CalcUtil.calculateMean(ali), d);
         assertEquals(3D, CalcUtil.calculateAverage(ali), d);
 
-        ali.add(new LogValue(4010, 1000D, 50D, 1D, 1D));
-        ali.add(new LogValue(4020, 1000D, 50D, 1D, 2D));
-        ali.add(new LogValue(4030, 1000D, 50D, 1D, 3D));
-        ali.add(new LogValue(4040, 1000D, 50D, 1D, 4D));
-        ali.add(new LogValue(4050, 1000D, 50D, 1D, 5D));
+        ali.add(new LogValue(4010, 1000, 50D, 1D, 1D));
+        ali.add(new LogValue(4020, 1000, 50D, 1D, 2D));
+        ali.add(new LogValue(4030, 1000, 50D, 1D, 3D));
+        ali.add(new LogValue(4040, 1000, 50D, 1D, 4D));
+        ali.add(new LogValue(4050, 1000, 50D, 1D, 5D));
 
-        ali.add(new LogValue(8010, 1000D, 50D, 1D, 1D));
-        ali.add(new LogValue(8020, 1000D, 50D, 1D, 2D));
-        ali.add(new LogValue(8030, 1000D, 50D, 1D, 3D));
-        ali.add(new LogValue(8040, 1000D, 50D, 1D, 4D));
-        ali.add(new LogValue(8050, 1000D, 50D, 1D, 5D));
+        ali.add(new LogValue(8010, 1000, 50D, 1D, 1D));
+        ali.add(new LogValue(8020, 1000, 50D, 1D, 2D));
+        ali.add(new LogValue(8030, 1000, 50D, 1D, 3D));
+        ali.add(new LogValue(8040, 1000, 50D, 1D, 4D));
+        ali.add(new LogValue(8050, 1000, 50D, 1D, 5D));
 
         assertEquals(3D, CalcUtil.calculateAverage(ali), d);
 
@@ -182,11 +182,11 @@ public class TestCalcUtil {
     @Test
     public void testDecideInterval() {
         List<LogValue> ali = new ArrayList<>();
-        ali.add(new LogValue(1010, 1000D, 50D, 1D, 1D));
-        ali.add(new LogValue(1020, 1000D, 50D, 1D, 2D));
-        ali.add(new LogValue(1030, 1000D, 50D, 1D, 3D));
-        ali.add(new LogValue(1040, 1000D, 50D, 1D, 4D));
-        ali.add(new LogValue(1050, 1000D, 50D, 1D, 5D));
+        ali.add(new LogValue(1010, 1000, 50D, 1D, 1D));
+        ali.add(new LogValue(1020, 1000, 50D, 1D, 2D));
+        ali.add(new LogValue(1030, 1000, 50D, 1D, 3D));
+        ali.add(new LogValue(1040, 1000, 50D, 1D, 4D));
+        ali.add(new LogValue(1050, 1000, 50D, 1D, 5D));
 
         assertEquals(10, CalcUtil.decideInterval(ali));
     }

@@ -3,12 +3,13 @@ package com.larz1.afranalyzer;
 // Feilen ligger her, må huske unadjusted AFR, slik at den kab benyttes i EGO calc, må også endre i Service
 
 public class LogValue {
-    public int Time;
-    public double ZX_RPM;
-    public double ZX_TPS;
-    public double ZX_GEAR;
-    public double LLC_AFR;
-    public double ZX_ECT;
+    private int time;
+    private int rpm;
+    private double tps;
+    private double gear;
+    private double afr;
+    private double ect;
+    private double lonacc;
     private boolean skip = false;
     private boolean egoOffsetApplied = false;
     private int egoOffset;
@@ -19,37 +20,40 @@ public class LogValue {
     public LogValue() {
     }
 
-    public LogValue(int time, double ZX_RPM, double ZX_TPS, double LLC_AFR) {
-        Time = time;
-        this.ZX_RPM = ZX_RPM;
-        this.ZX_TPS = ZX_TPS;
-        this.LLC_AFR = LLC_AFR;
+    public LogValue(int time, int rpm, double tps, double afr) {
+        this.time = time;
+        this.rpm = rpm;
+        this.tps = tps;
+        this.afr = afr;
     }
 
     public LogValue(LogValue a) {
-        this.Time = a.Time;
-        this.ZX_RPM = a.ZX_RPM;
-        this.ZX_TPS = a.ZX_TPS;
-        this.ZX_GEAR = a.ZX_GEAR;
-        this.LLC_AFR = a.LLC_AFR;
-        this.ZX_ECT = a.ZX_ECT;
-        this.skip = a.isSkip();
-        this.egoOffsetApplied = a.isEgoOffsetApplied();
-        this.unadjustedAfr = a.getUnadjustedAfr();
+        this.time = a.time;
+        this.rpm = a.rpm;
+        this.tps = a.tps;
+        this.gear = a.gear;
+        this.afr = a.afr;
+        this.ect = a.ect;
+        this.lonacc = a.lonacc;
+        this.lineNr = a.lineNr;
+        this.egoOffset = a.egoOffset;
+        this.skip = a.skip;
+        this.egoOffsetApplied = a.egoOffsetApplied;
+        this.unadjustedAfr = a.unadjustedAfr;
     }
 
-    public LogValue(int time, double ZX_RPM, double ZX_TPS, double ZX_GEAR, double LLC_AFR) {
-        this.Time = time;
-        this.ZX_RPM = ZX_RPM;
-        this.ZX_TPS = ZX_TPS;
-        this.ZX_GEAR = ZX_GEAR;
-        this.LLC_AFR = LLC_AFR;
+    public LogValue(int time, int rpm, double tps, double gear, double afr) {
+        this.time = time;
+        this.rpm = rpm;
+        this.tps = tps;
+        this.gear = gear;
+        this.afr = afr;
     }
 
-    public LogValue(double ZX_RPM, double ZX_TPS, double LLC_AFR) {
-        this.ZX_RPM = ZX_RPM;
-        this.ZX_TPS = ZX_TPS;
-        this.LLC_AFR = LLC_AFR;
+    public LogValue(int rpm, double tps, double afr) {
+        this.rpm = rpm;
+        this.tps = tps;
+        this.afr = afr;
     }
 
     /**
@@ -58,7 +62,7 @@ public class LogValue {
      * @return
      */
     public int getTime() {
-        return Time;
+        return time;
     }
 
     /**
@@ -67,42 +71,42 @@ public class LogValue {
      * @param time
      */
     public void setTime(int time) {
-        Time = time;
+        this.time = time;
     }
 
-    public double getRpm() {
-        return ZX_RPM;
+    public int getRpm() {
+        return rpm;
     }
 
-    public void setRpm(double ZX_RPM) {
-        this.ZX_RPM = ZX_RPM;
+    public void setRpm(int rpm) {
+        this.rpm = rpm;
     }
 
     public double getTps() {
-        return ZX_TPS;
+        return tps;
     }
 
-    public void setTps(double ZX_TPS) {
-        this.ZX_TPS = ZX_TPS;
+    public void setTps(double tps) {
+        this.tps = tps;
     }
 
     public double getGear() {
-        return ZX_GEAR;
+        return gear;
     }
 
-    public void setGear(double ZX_GEAR) {
-        this.ZX_GEAR = ZX_GEAR;
+    public void setGear(double gear) {
+        this.gear = gear;
     }
 
     public double getAfr() {
-        return LLC_AFR;
+        return afr;
     }
 
-    public void setAfr(double LLC_AFR) {
+    public void setAfr(double afr) {
         if (egoOffsetApplied) {
-            this.unadjustedAfr = this.LLC_AFR;
+            this.unadjustedAfr = this.afr;
         }
-        this.LLC_AFR = LLC_AFR;
+        this.afr = afr;
     }
 
     public boolean isSkip() {
@@ -122,11 +126,11 @@ public class LogValue {
     }
 
     public double getEct() {
-        return ZX_ECT;
+        return ect;
     }
 
     public void setEct(double ZC_ECT) {
-        this.ZX_ECT = ZC_ECT;
+        this.ect = ZC_ECT;
     }
 
     public double getUnadjustedAfr() {
@@ -134,7 +138,7 @@ public class LogValue {
             return unadjustedAfr;
         }
 
-        return this.LLC_AFR;
+        return this.afr;
 
     }
 
@@ -154,15 +158,30 @@ public class LogValue {
         this.egoOffset = egoOffset;
     }
 
+    public double getLonacc() {
+        return lonacc;
+    }
+
+    public void setLonacc(double lonacc) {
+        this.lonacc = lonacc;
+    }
+
+
     @Override
     public String toString() {
         return "LogValue{" +
-                "Time=" + Time +
-                ", ZX_RPM=" + ZX_RPM +
-                ", ZX_TPS=" + ZX_TPS +
-                ", ZX_GEAR=" + ZX_GEAR +
-                ", LLC_AFR=" + LLC_AFR +
+                "time=" + time +
+                ", rpm=" + rpm +
+                ", tps=" + tps +
+                ", gear=" + gear +
+                ", afr=" + afr +
+                ", ect=" + ect +
+                ", lonacc=" + lonacc +
                 ", skip=" + skip +
-                '}' + '\n';
+                ", egoOffsetApplied=" + egoOffsetApplied +
+                ", egoOffset=" + egoOffset +
+                ", unadjustedAfr=" + unadjustedAfr +
+                ", lineNr=" + lineNr +
+                '}';
     }
 }

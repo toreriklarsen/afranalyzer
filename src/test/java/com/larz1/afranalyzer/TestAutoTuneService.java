@@ -68,6 +68,11 @@ public class TestAutoTuneService {
             return new CellToleranceFilter(afrAnalyzerSettings());
         }
 
+        @Bean
+        public MinLonAccFilter  minLonAccFilter() {
+            return new MinLonAccFilter(afrAnalyzerSettings());
+        }
+
         @MockBean
         private Status status;
     }
@@ -216,7 +221,7 @@ public class TestAutoTuneService {
         File f = new File("src/test/resources/afrdata01.csv");
         List<LogValue> lv = autoTuneService.readAfrFile(f);
         assertEquals(0, lv.get(0).getTime());
-        assertEquals(10341.040039, lv.get(0).getRpm(), d);
+        assertEquals(10341, lv.get(0).getRpm());
 
         assertEquals(100, lv.get(1).getTime());
         assertEquals(200, lv.get(2).getTime());

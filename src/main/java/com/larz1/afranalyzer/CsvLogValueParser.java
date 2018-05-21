@@ -38,7 +38,7 @@ public class CsvLogValueParser {
     public boolean parse() throws IOException {
         boolean parseOK = false;
         CsvMapper mapper = new CsvMapper();
-        CsvSchema schema = CsvSchema.emptySchema().withHeader(); // use first row as header; otherwise defaults are fine
+        CsvSchema schema = CsvSchema.emptySchema().withHeader();
         MappingIterator<Map<String, String>> it;
         if (csv == null) {
             it = mapper.readerFor(Map.class)
@@ -85,9 +85,18 @@ public class CsvLogValueParser {
             timeval = Integer.parseInt(timeString);
         }
         lv.setTime(timeval);
-        lv.setRpm(Double.parseDouble(rowAsMap.get(rpmColName)));
+        lv.setRpm((int)Double.parseDouble(rowAsMap.get(rpmColName)));
         lv.setTps(Double.parseDouble(rowAsMap.get(tpsColName)));
         lv.setAfr(Double.parseDouble(rowAsMap.get(afrColName)));
+        if (gearColName != null) {
+            lv.setGear(Double.parseDouble(rowAsMap.get(gearColName)));
+        }
+        if (ectColName != null) {
+            lv.setEct(Double.parseDouble(rowAsMap.get(ectColName)));
+        }
+        if (lonAccColName!= null) {
+            lv.setLonacc(Double.parseDouble(rowAsMap.get(lonAccColName)));
+        }
 
         return lv;
     }

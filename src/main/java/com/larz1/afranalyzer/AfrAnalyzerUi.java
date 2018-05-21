@@ -10,7 +10,6 @@ import org.springframework.stereotype.Controller;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
@@ -71,6 +70,7 @@ public class AfrAnalyzerUi extends JFrame {
     private JCheckBox egoCompensationBox;
 
     private JTabbedPane tabbedPane;
+
     private JCheckBox maxAfrBox;
     private JTextField minAfrField;
     private JCheckBox minAfrBox;
@@ -79,6 +79,8 @@ public class AfrAnalyzerUi extends JFrame {
     private JTextField minEctField;
     private JCheckBox lowRpmBox;
     private JTextField lowRpmField;
+    private JCheckBox minLonAccBox;
+    private JTextField minLonAccField;
 
     // for autotune
     private JCheckBox maxTunePercentageBox;
@@ -301,6 +303,15 @@ public class AfrAnalyzerUi extends JFrame {
         minAfrField.addActionListener(ae -> minAfrChanged());
         minAfrField.setToolTipText(tooltipText);
 
+        tooltipText = "Min Longitudal Acceleration filter";
+        minLonAccBox = new JCheckBox("Min LonAcc:", afrAnalyzerSettings.minLonAccEnabled);
+        minLonAccBox.addActionListener(ae -> checkMinLonAccFilter());
+        minLonAccBox.setToolTipText(tooltipText);
+        tooltipText = "Min Longitudal Acceleration value";
+        minLonAccField = new JTextField("" + afrAnalyzerSettings.minLonAcc);
+        minLonAccField.addActionListener(ae -> minLonAccChanged());
+        minLonAccField.setToolTipText(tooltipText);
+
         tooltipText = "Filter out values due to upshifting with quickshifter";
         quickShiftBox = new JCheckBox("Quick shift filter", afrAnalyzerSettings.quickshiftEnabled);
         quickShiftBox.setToolTipText(tooltipText);
@@ -465,6 +476,9 @@ public class AfrAnalyzerUi extends JFrame {
         bottomPanel.add(lowRpmBox);
         bottomPanel.add(lowRpmField, "wrap");
 
+        bottomPanel.add(minLonAccBox);
+        bottomPanel.add(minLonAccField, "wrap");
+
         bottomPanel.add(quickShiftBox);
         bottomPanel.add(neutralBox);
         bottomPanel.add(egoCompensationBox, "wrap");
@@ -541,6 +555,24 @@ public class AfrAnalyzerUi extends JFrame {
             filterAndRecalculate();
         }
     }
+
+    private void checkMinLonAccFilter() {
+        afrAnalyzerSettings.minLonAccEnabled = minLonAccBox.isSelected();
+        filterAndRecalculate();
+    }
+
+    private void minLonAccChanged() {
+        afrAnalyzerSettings.minLonAcc = new Double(minLonAccField.getText());
+        if (minLonAccBox.isEnabled()) {
+            filterAndRecalculate();
+        }
+    }
+
+
+
+
+
+
 
     private void lowRpmFilter() {
         afrAnalyzerSettings.lowRpmEnabled = lowRpmBox.isSelected();

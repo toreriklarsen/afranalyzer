@@ -50,6 +50,9 @@ public class AutoTuneService {
     private MinEctFilter minEctFilter;
 
     @Autowired
+    private MinLonAccFilter minLonAccFilter;
+
+    @Autowired
     private Status status;
 
     public enum PRINT {
@@ -321,6 +324,10 @@ public class AutoTuneService {
                 nFilteredOut[0]++;
                 //logValue.setSkip(true);
                 logger.trace("filtering out afr {} value,ECT {} < {}", data.getAfr(), data.getEct(), afrAnalyzerSettings.minEct);
+            } else if (minLonAccFilter.filter(data)) {
+                nFilteredOut[0]++;
+                //logValue.setSkip(true);
+                logger.trace("filtering out afr {} value,LonAcc {} < {}", data.getAfr(), data.getLonacc(), afrAnalyzerSettings.minLonAcc);
             } else if (minRpmFilter.filter(data)) {
                 nFilteredOut[0]++;
                 //logValue.setSkip(true);
@@ -467,6 +474,7 @@ public class AutoTuneService {
 
     /**
      * Calculate ego for each cell ion the map
+     *
      * @return
      */
     AdjAFRValue[][] calculateEgo() {

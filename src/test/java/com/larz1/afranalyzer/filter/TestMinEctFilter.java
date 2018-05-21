@@ -15,7 +15,7 @@ public class TestMinEctFilter {
         as.minEctEnabled = true;
         as.minEct = 80;
         MinEctFilter minEctFilter = new MinEctFilter(as);
-        LogValue logValue = new LogValue(0, 499.0, 90.0, 0.0, 14.0);
+        LogValue logValue = new LogValue(0, 499, 90.0, 0.0, 14.0);
         logValue.setEct(79.0);
         assertTrue(minEctFilter.filter(logValue));
         as.minEct = 78;

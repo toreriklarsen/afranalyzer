@@ -41,6 +41,11 @@ public class AfrAnalyzerSettings {
     @Value("${egocompensationenabled:true}")
     public Boolean egoCompensationEnabled;
 
+    @Value("${minlonaccenabled:false}")
+    public Boolean minLonAccEnabled;
+    @Value("${minlonacc:-0.15}")
+    public Double minLonAcc;
+
     // used for autotune
     @Value("${maxtunepercentagenabled:false}")
     public Boolean maxtunepercentageEnabled;
