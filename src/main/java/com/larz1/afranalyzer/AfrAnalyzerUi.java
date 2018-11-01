@@ -81,6 +81,8 @@ public class AfrAnalyzerUi extends JFrame {
     private JTextField lowRpmField;
     private JCheckBox minLonAccBox;
     private JTextField minLonAccField;
+    private JCheckBox gearBox;
+    private JComboBox<Integer> gearComboBox;
 
     // for autotune
     private JCheckBox maxTunePercentageBox;
@@ -381,6 +383,19 @@ public class AfrAnalyzerUi extends JFrame {
         minValuesInCellField.addActionListener(ae -> minValuesInCellChanged());
         minValuesInCellField.setToolTipText(tooltipText);
 
+        tooltipText = "Select gear for data";
+        gearBox = new JCheckBox("Select gear", afrAnalyzerSettings.gearEnabled);
+        gearBox.setToolTipText(tooltipText);
+        gearBox.addActionListener(ae -> gear());
+        tooltipText = "Min Values %value";
+        Integer gears[] = {1, 2, 3, 4, 5, 6};
+        gearComboBox = new JComboBox<>(gears);
+        gearComboBox.addActionListener(ae -> gearChanged());
+
+
+        minValuesInCellField.addActionListener(ae -> minValuesInCellChanged());
+        minValuesInCellField.setToolTipText(tooltipText);
+
         contentPane = new JPanel();
 
         addComponentsToContentPane();
@@ -477,7 +492,12 @@ public class AfrAnalyzerUi extends JFrame {
         bottomPanel.add(lowRpmField, "wrap");
 
         bottomPanel.add(minLonAccBox);
-        bottomPanel.add(minLonAccField, "wrap");
+        bottomPanel.add(minLonAccField);
+
+        bottomPanel.add(gearBox);
+        bottomPanel.add(gearComboBox, "wrap");
+
+
 
         bottomPanel.add(quickShiftBox);
         bottomPanel.add(neutralBox);
@@ -568,12 +588,6 @@ public class AfrAnalyzerUi extends JFrame {
         }
     }
 
-
-
-
-
-
-
     private void lowRpmFilter() {
         afrAnalyzerSettings.lowRpmEnabled = lowRpmBox.isSelected();
         filterAndRecalculate();
@@ -630,6 +644,18 @@ public class AfrAnalyzerUi extends JFrame {
     private void minValuesInCellChanged() {
         afrAnalyzerSettings.minValuesInCell = new Integer(minValuesInCellField.getText());
         if (minValuesInCellBox.isEnabled()) {
+            filterAndRecalculate();
+        }
+    }
+
+    private void gear() {
+        afrAnalyzerSettings.gearEnabled= gearBox.isSelected();
+        filterAndRecalculate();
+    }
+
+    private void gearChanged() {
+        afrAnalyzerSettings.gear = (Integer)gearComboBox.getSelectedItem();
+        if (gearBox.isEnabled()) {
             filterAndRecalculate();
         }
     }

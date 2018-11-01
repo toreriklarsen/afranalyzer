@@ -46,6 +46,11 @@ public class AfrAnalyzerSettings {
     @Value("${minlonacc:-0.15}")
     public Double minLonAcc;
 
+    @Value("${gearenabled:false}")
+    public Boolean gearEnabled;
+    @Value("${gear:6}")
+    public Integer gear;
+
     // used for autotune
     @Value("${maxtunepercentagenabled:false}")
     public Boolean maxtunepercentageEnabled;

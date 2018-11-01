@@ -73,6 +73,11 @@ public class TestAutoTuneService {
             return new MinLonAccFilter(afrAnalyzerSettings());
         }
 
+        @Bean
+        public GearFilter  gearFilter() {
+            return new GearFilter(afrAnalyzerSettings());
+        }
+
         @MockBean
         private Status status;
     }

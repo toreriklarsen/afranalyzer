@@ -41,6 +41,9 @@ public class AutoTuneService {
     private MinRpmFilter minRpmFilter;
 
     @Autowired
+    private GearFilter gearFilter;
+
+    @Autowired
     private NeutralFilter neutralFilter;
 
     @Autowired
@@ -225,45 +228,6 @@ public class AutoTuneService {
         return logValues;
     }
 
-    public List<LogValue> readAfrFileOld(File file) throws IOException {
-        logger.debug("readAfrFile {}", file);
-
-        if (status != null) {
-            status.setAfrFileName(file.getName());
-        }
-        CsvSchema schema = CsvSchema.builder()
-                .setSkipFirstDataRow(true)
-                .setAllowComments(true)
-                //.setUseHeader(true)
-                //.setReorderColumns(true)
-                .setColumnSeparator(',')
-                .addNumberColumn("Time")
-                .addNumberColumn("ZX_RPM")
-                .addNumberColumn("ZX_TPS")
-                .addNumberColumn("ZX_GEAR")
-                .addNumberColumn("LLC_AFR")
-                .build();
-
-        CsvMapper mapper = new CsvMapper();
-        ObjectReader oReader = mapper.readerFor(LogValue.class).with(schema);
-
-        // read from file
-        List<LogValue> logValues = new ArrayList<>();
-        Reader reader = new FileReader(file);
-        MappingIterator<LogValue> mi = oReader.readValues(reader);
-        int i = 2;
-        while (mi.hasNext()) {
-            LogValue l = mi.next();
-            l.setLineNr(i);
-            logValues.add(l);
-        }
-        if (status != null) {
-            status.setNumlogValues(logValues.size());
-        }
-
-        return logValues;
-    }
-
     public AdjAFRValue[][] readTargetAfrFile() throws IOException {
         return readTargetAfrFile(afrAnalyzerSettings.targetAfrFile);
     }
@@ -328,6 +292,10 @@ public class AutoTuneService {
                 nFilteredOut[0]++;
                 //logValue.setSkip(true);
                 logger.trace("filtering out afr {} value,LonAcc {} < {}", data.getAfr(), data.getLonacc(), afrAnalyzerSettings.minLonAcc);
+            } else if (gearFilter.filter(data)) {
+                nFilteredOut[0]++;
+                //logValue.setSkip(true);
+                logger.trace("filtering out afr {} value,gear {} != {}", data.getAfr(), data.getGear(), afrAnalyzerSettings.gear);
             } else if (minRpmFilter.filter(data)) {
                 nFilteredOut[0]++;
                 //logValue.setSkip(true);

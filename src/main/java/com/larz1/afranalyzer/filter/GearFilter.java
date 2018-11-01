@@ -6,17 +6,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
-public class NeutralFilter extends AbstractAfrFilter {
+public class GearFilter extends AbstractAfrFilter {
 
     @Autowired
-    public NeutralFilter(AfrAnalyzerSettings afrAnalyzerSettings) {
+    public GearFilter(AfrAnalyzerSettings afrAnalyzerSettings) {
         super(afrAnalyzerSettings);
     }
 
     @Override
     public boolean filter(LogValue logValue, Object... args) {
-        if (afrAnalyzerSettings.neutralEnabled) {
-            return logValue.getGear() == 0.0;
+        if (afrAnalyzerSettings.gearEnabled) {
+            return !(logValue.getGear() == afrAnalyzerSettings.gear);
         }
 
         return false;

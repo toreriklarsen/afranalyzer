@@ -122,7 +122,7 @@ public class CsvLogValueParser {
             } else if (colName.toLowerCase().contains("lonacc")) {
                 lonAccColName = colName;
             } else {
-                System.out.println("found unknown column:" + colName);
+                logger.warn("found unknown column {}, skipping" + colName);
             }
         }
 
