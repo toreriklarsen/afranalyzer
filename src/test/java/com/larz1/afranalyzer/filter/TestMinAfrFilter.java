@@ -14,11 +14,11 @@ public class TestMinAfrFilter {
         AfrAnalyzerSettings as = new AfrAnalyzerSettings();
         as.minAfrEnabled = true;
         as.minAfr = 13.0;
-        MinAfrFilter MinAfrFilter = new MinAfrFilter(as);
+        MinAfrFilter minAfrFilter = new MinAfrFilter(as);
         LogValue logValue = new LogValue(0, 2000, 90.0, 0.0, 14.0);
-        assertFalse(MinAfrFilter.filter(logValue));
+        assertFalse(minAfrFilter.filter(logValue));
         as.minAfr = 15.0;
-        assertTrue(MinAfrFilter.filter(logValue));
+        assertTrue(minAfrFilter.filter(logValue));
     }
 
     @Test

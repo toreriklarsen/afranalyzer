@@ -388,7 +388,7 @@ public class AfrAnalyzerUi extends JFrame {
         gearBox.setToolTipText(tooltipText);
         gearBox.addActionListener(ae -> gear());
         tooltipText = "Min Values %value";
-        Integer gears[] = {1, 2, 3, 4, 5, 6};
+        Integer[] gears = {1, 2, 3, 4, 5, 6};
         gearComboBox = new JComboBox<>(gears);
         gearComboBox.addActionListener(ae -> gearChanged());
 

@@ -2,6 +2,7 @@ package com.larz1.afranalyzer;
 
 // Feilen ligger her, må huske unadjusted AFR, slik at den kab benyttes i EGO calc, må også endre i Service
 
+@SuppressWarnings("SpellCheckingInspection")
 public class LogValue {
     private int time;
     private int rpm;
@@ -40,6 +41,15 @@ public class LogValue {
         this.skip = a.skip;
         this.egoOffsetApplied = a.egoOffsetApplied;
         this.unadjustedAfr = a.unadjustedAfr;
+    }
+
+    public LogValue(int time, int rpm, double tps, double gear, double afr, double lonacc) {
+        this.time = time;
+        this.rpm = rpm;
+        this.tps = tps;
+        this.gear = gear;
+        this.afr = afr;
+        this.lonacc = lonacc;
     }
 
     public LogValue(int time, int rpm, double tps, double gear, double afr) {

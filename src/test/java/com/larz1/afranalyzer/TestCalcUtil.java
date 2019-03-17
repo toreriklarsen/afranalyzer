@@ -108,6 +108,24 @@ public class TestCalcUtil {
     }
 
     @Test
+    public void testCalculateStdDeviationNull() {
+        List<LogValue> ali = new ArrayList<>();
+        ali.add(new LogValue(100, 1000, 50D, 1D, 2.5D));
+
+        assertEquals(0.0D, CalcUtil.calculateStdDeviation(null, CalcUtil.calculateMean(ali)), d);
+    }
+
+    @Test
+    public void testCalculateStdDeviationEmpty() {
+        List<LogValue> ali = new ArrayList<>();
+        ali.add(new LogValue(100, 1000, 50D, 1D, 2.5D));
+
+        List<LogValue> ali2 = new ArrayList<>();
+
+        assertEquals(0.0D, CalcUtil.calculateStdDeviation(ali2, CalcUtil.calculateMean(ali)), d);
+    }
+
+    @Test
     public void testCalculateAverage() {
         List<LogValue> ali = new ArrayList<>();
         ali.add(new LogValue(1000, 1000, 50D, 1D, 2.5D));
