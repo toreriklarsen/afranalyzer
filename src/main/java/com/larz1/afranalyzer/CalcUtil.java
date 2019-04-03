@@ -3,6 +3,9 @@ package com.larz1.afranalyzer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
+
+import static com.larz1.afranalyzer.AutoTuneService.rpmArray;
 
 public class CalcUtil {
     /**
@@ -82,11 +85,8 @@ public class CalcUtil {
     }
 
     public static double calculateMean(List<LogValue> afrs) {
-        double sum = 0;
-        for (LogValue val : afrs) {
-            sum += val.getAfr();
-        }
-        return sum / afrs.size();
+        return afrs.stream()
+                .collect(Collectors.averagingDouble(p -> p.getAfr()));
     }
 
     public static Integer findIndex(final double[] array, final double value) {
@@ -104,9 +104,6 @@ public class CalcUtil {
                 // Do nothing. This point is outside the array bounds
             } else {
                 // Find nearest point
-                //double d0 = Math.abs(array[idx - 1] - value);
-                //double d1 = Math.abs(array[idx] - value);
-                //i = (d0 <= d1) ? idx - 1 : idx;
                 double lngt = (array[idx] - array[idx - 1]) / 2 * factor;
                 double midLow = array[idx - 1] + lngt;
                 double midHigh = array[idx] - lngt;
@@ -207,4 +204,66 @@ public class CalcUtil {
 
         return prevTimeDiff;
     }
+
+    public static int d2fit(int x1, int x3, int y1, int y2, int y3) {
+        int d2 = y1 - 2 * y2 + y3;
+        int x2 = x1 + x3 - d2;
+        return (int) Math.round(x2 / 2.0);
+    }
+
+
+    // se link https://bitbucket.org/ballad2/ballad2_fork/src/8f8b368e85e1f6f74b9ad637d94ad6b74185e407/checkin/smoothing.vb?at=default&fileviewer=file-view-default
+    public int preSmooth(AdjAFRValue[][] autoTunePercentageMap, AdjAFRValue[][] autoTuneFuelMap, AdjAFRValue[][] runningFuelMap) {
+        int nPolished = 0;
+        double local_factor;
+        double clocal;
+        int idiff;
+        int cdiff;
+        int nAuto;
+        //Dim s_map(maxRPM, maxVal) As Integer
+        int n;
+        AutoTuneMatrix runningMatrix = new AutoTuneMatrix();
+        AutoTuneMatrix autoTuneFuelMapMatrix = new AutoTuneMatrix();
+
+        for (int i = 1; i < AutoTuneService.tpsArray.length - 1; i++) {
+            for (int j = 0; j < AutoTuneService.rpmArray.length - 2; j++) {
+                if (autoTunePercentageMap[i][j].getAverage() == 0.0) continue;
+
+                // On each cell not on the boundary rows or columns, performs 2 dimensions, 2nd order interpolation
+                if (i == AutoTuneService.tpsArray.length - 1) {
+                    n = 0;
+                    idiff = 0;
+                } else {
+                    n = 1;
+                }
+                nAuto = 0;
+
+                autoTuneFuelMapMatrix.cc = autoTuneFuelMap[i][j].getAverage();
+
+                runningMatrix.tlc = runningFuelMap[i - 1][j - 1].getAverage();
+                runningMatrix.tc = runningFuelMap[i - 1][j].getAverage();
+                runningMatrix.trc = runningFuelMap[i - 1][j + 1].getAverage();
+
+                runningMatrix.lc = runningFuelMap[i][j - 1].getAverage();
+                runningMatrix.cc = runningFuelMap[i][j].getAverage();
+                runningMatrix.rc = runningFuelMap[i][j + 1].getAverage();
+
+                runningMatrix.blc = runningFuelMap[i + 1][j - 1].getAverage();
+                runningMatrix.bc= runningFuelMap[i + 1][j].getAverage();
+                runningMatrix.brc = runningFuelMap[i + 1][j + 1].getAverage();
+
+
+
+
+
+            }
+        }
+
+
+
+
+        return 0;
+    }
+
+
 }

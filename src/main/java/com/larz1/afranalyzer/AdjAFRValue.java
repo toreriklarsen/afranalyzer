@@ -52,6 +52,10 @@ public class AdjAFRValue {
         //this.count = afrList.size();
     }
 
+    public List<LogValue> getAfrList() {
+        return afrList;
+    }
+
     @Override
     public String toString() {
         return "AdjAFRValue{" +

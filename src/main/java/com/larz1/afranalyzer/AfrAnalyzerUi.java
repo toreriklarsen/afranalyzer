@@ -13,8 +13,11 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 
@@ -33,6 +36,7 @@ public class AfrAnalyzerUi extends JFrame {
     private AfrModel sourceModel;
     private AfrModel tuneModel;
     private AfrModel egoModel;
+    private LogModel logModel;
 
     /* UI Components */
     private JFileChooser afrFileChooser;
@@ -55,6 +59,7 @@ public class AfrAnalyzerUi extends JFrame {
     private JTable sourceMapTable;
     private JTable tuneMapTable;
     private JTable egoTable;
+    private JTable logTable;
 
     private JScrollPane afrTableScroll;
     private JScrollPane filteredAfrTableScroll;
@@ -64,6 +69,7 @@ public class AfrAnalyzerUi extends JFrame {
     private JScrollPane tuneTableScroll;
     private JScrollPane egoTableScroll;
     private JScrollPane cellCountTableScroll;
+    private JScrollPane logTableScroll;
 
     private JCheckBox quickShiftBox;
     private JCheckBox neutralBox;
@@ -181,7 +187,7 @@ public class AfrAnalyzerUi extends JFrame {
     private void filterAndRecalculate() {
         logger.debug("recalculate the correction values");
         // filter the raw data
-        List<LogValue> lv = null;
+        List<LogValue> lv;
         if (afrAnalyzerSettings.egoCompensationEnabled) {
             lv = autoTuneService.applyEgo(this.rawLogValues);
         } else {
@@ -212,7 +218,7 @@ public class AfrAnalyzerUi extends JFrame {
 
     @Autowired
     public AfrAnalyzerUi(AfrAnalyzerSettings afrAnalyzerSettings, AutoTuneService autoTuneService, StatusBar statusBar) {
-        super("AFRanalyzer 0.8");
+        super("AFRanalyzer 0.9");
 
         this.afrAnalyzerSettings = afrAnalyzerSettings;
         this.autoTuneService = autoTuneService;
@@ -248,16 +254,44 @@ public class AfrAnalyzerUi extends JFrame {
         egoModel = new AfrModel(false, true);
         sourceModel = new AfrModel(true);
         tuneModel = new AfrModel(true);
+
         AdjAFRValue[][] mArr = new AdjAFRValue[AutoTuneService.tpsArray.length][AutoTuneService.rpmArray.length];
-        for (int i = 0; i < AutoTuneService.tpsArray.length; i++) {
-            for (int j = 0; j < AutoTuneService.rpmArray.length; j++) {
+
+        for (int i = 0; i < mArr.length; i++) {
+            for (int j = 0; j < mArr.length; j++) {
                 mArr[i][j] = new AdjAFRValue();
             }
         }
+
         sourceModel.setMapArray(mArr);
 
         afrTable = new TpsRpmTable(afrModel, afrAnalyzerSettings);
         filteredAfrTable = new TpsRpmTable(filteredAfrModel, compAfrModel, true, afrAnalyzerSettings);
+
+        filteredAfrTable.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                //if (e.getClickCount() == 2) {
+                if (SwingUtilities.isRightMouseButton(e)) {
+                    JTable target = (JTable) e.getSource();
+                    int row = target.getSelectedRow();
+                    int column = target.getSelectedColumn();
+                    System.out.println("Row:" + row + ", Column:" + column);
+                    System.out.println(target.getModel().getValueAt(row, column));
+                    AfrModel model = (AfrModel) target.getModel();
+                    AdjAFRValue[][] values = model.getMapArray();
+
+                    AdjAFRValue value = values[row][column - 1];
+                    System.out.println("val:" + value.getAverage() + " count:" + value.getCount());
+                    for (LogValue lv : value.getAfrList()) {
+                        System.out.println(lv);
+                    }
+                    logModel.setLogValues(value.getAfrList());
+
+
+                }
+            }
+        });
+
         targetAfrTable = new TpsRpmTable(targetAfrModel, afrAnalyzerSettings);
         compAfrTable = new TpsRpmTable(compAfrModel, null, true, afrAnalyzerSettings);
         egoTable = new TpsRpmTable(egoModel, afrAnalyzerSettings);
@@ -274,6 +308,10 @@ public class AfrAnalyzerUi extends JFrame {
         tuneTableScroll = new JScrollPane(tuneMapTable);
         cellCountTableScroll = new JScrollPane(cellCountTable);
 
+        logModel = new LogModel();
+        logTable = new JTable(logModel);
+        logTableScroll = new JScrollPane(logTable);
+
         tabbedPane = new JTabbedPane();
         tabbedPane.addTab("Raw afr file", afrTableScroll);
         tabbedPane.addTab("Filtered afr file", filteredAfrTableScroll);
@@ -284,6 +322,7 @@ public class AfrAnalyzerUi extends JFrame {
         tabbedPane.addTab("Tuned map", tuneTableScroll);
         tabbedPane.addTab("Ego (ms)", egoTableScroll);
         //tabbedPane.addTab("Afr 3d", egoTableScroll);
+
 
         String tooltipText;
 
@@ -301,7 +340,7 @@ public class AfrAnalyzerUi extends JFrame {
         minAfrBox.addActionListener(ae -> checkMinAfrFilter());
         minAfrBox.setToolTipText(tooltipText);
         tooltipText = "Min AFR filter value";
-        minAfrField = new JTextField("" + afrAnalyzerSettings.minAfr);
+        minAfrField = new JTextField(String.valueOf(afrAnalyzerSettings.minAfr));
         minAfrField.addActionListener(ae -> minAfrChanged());
         minAfrField.setToolTipText(tooltipText);
 
@@ -310,7 +349,7 @@ public class AfrAnalyzerUi extends JFrame {
         minLonAccBox.addActionListener(ae -> checkMinLonAccFilter());
         minLonAccBox.setToolTipText(tooltipText);
         tooltipText = "Min Longitudal Acceleration value";
-        minLonAccField = new JTextField("" + afrAnalyzerSettings.minLonAcc);
+        minLonAccField = new JTextField(String.valueOf(afrAnalyzerSettings.minLonAcc));
         minLonAccField.addActionListener(ae -> minLonAccChanged());
         minLonAccField.setToolTipText(tooltipText);
 
@@ -334,7 +373,7 @@ public class AfrAnalyzerUi extends JFrame {
         minEctBox.setToolTipText(tooltipText);
         minEctBox.addActionListener(ae -> minEctFilter());
         tooltipText = "Min ECT filter value:";
-        minEctField = new JTextField("" + afrAnalyzerSettings.minEct, 4);
+        minEctField = new JTextField(String.valueOf(afrAnalyzerSettings.minEct), 4);
         minEctField.addActionListener(ae -> minEctChanged());
         minEctField.setToolTipText(tooltipText);
 
@@ -343,7 +382,7 @@ public class AfrAnalyzerUi extends JFrame {
         lowRpmBox.setToolTipText(tooltipText);
         lowRpmBox.addActionListener(ae -> lowRpmFilter());
         tooltipText = "Low RPM filter value:";
-        lowRpmField = new JTextField("" + afrAnalyzerSettings.lowRpm, 4);
+        lowRpmField = new JTextField(String.valueOf(afrAnalyzerSettings.lowRpm), 4);
         lowRpmField.addActionListener(ae -> lowRpmChanged());
         lowRpmField.setToolTipText(tooltipText);
 
@@ -352,7 +391,7 @@ public class AfrAnalyzerUi extends JFrame {
         maxTunePercentageBox.setToolTipText(tooltipText);
         maxTunePercentageBox.addActionListener(ae -> maxTune());
         tooltipText = "Max tune %value";
-        maxTunePercentageField = new JTextField("" + afrAnalyzerSettings.maxTunePercentage, 4);
+        maxTunePercentageField = new JTextField(String.valueOf(afrAnalyzerSettings.maxTunePercentage), 4);
         maxTunePercentageField.addActionListener(ae -> maxTuneChanged());
         maxTunePercentageField.setToolTipText(tooltipText);
 
@@ -361,7 +400,7 @@ public class AfrAnalyzerUi extends JFrame {
         tuneStrengthBox.setToolTipText(tooltipText);
         tuneStrengthBox.addActionListener(ae -> tuneStrength());
         tooltipText = "Tune strength %value";
-        tuneStrengthField = new JTextField("" + afrAnalyzerSettings.tuneStrength, 4);
+        tuneStrengthField = new JTextField(String.valueOf(afrAnalyzerSettings.tuneStrength), 4);
         tuneStrengthField.addActionListener(ae -> tuneStrengthChanged());
         tuneStrengthField.setToolTipText(tooltipText);
 
@@ -370,7 +409,7 @@ public class AfrAnalyzerUi extends JFrame {
         cellToleranceBox.setToolTipText(tooltipText);
         cellToleranceBox.addActionListener(ae -> cellTolerance());
         tooltipText = "Binning tolerance %value";
-        cellToleranceField = new JTextField("" + afrAnalyzerSettings.cellTolerance, 4);
+        cellToleranceField = new JTextField(String.valueOf(afrAnalyzerSettings.cellTolerance), 4);
         cellToleranceField.addActionListener(ae -> cellToleranceChanged());
         cellToleranceField.setToolTipText(tooltipText);
 
@@ -379,7 +418,7 @@ public class AfrAnalyzerUi extends JFrame {
         minValuesInCellBox.setToolTipText(tooltipText);
         minValuesInCellBox.addActionListener(ae -> minValuesInCell());
         tooltipText = "Min Values %value";
-        minValuesInCellField = new JTextField("" + afrAnalyzerSettings.minValuesInCell, 4);
+        minValuesInCellField = new JTextField(String.valueOf(afrAnalyzerSettings.minValuesInCell), 4);
         minValuesInCellField.addActionListener(ae -> minValuesInCellChanged());
         minValuesInCellField.setToolTipText(tooltipText);
 
@@ -424,6 +463,7 @@ public class AfrAnalyzerUi extends JFrame {
         contentPane.add(topPanel, "north");
         contentPane.add(statusBar, "south");
         contentPane.add(bottomPanel, "south");
+        contentPane.add(logTableScroll, "east");
     }
 
     private JMenuBar createMenuBar() {
@@ -496,7 +536,6 @@ public class AfrAnalyzerUi extends JFrame {
 
         bottomPanel.add(gearBox);
         bottomPanel.add(gearComboBox, "wrap");
-
 
 
         bottomPanel.add(quickShiftBox);
@@ -649,12 +688,12 @@ public class AfrAnalyzerUi extends JFrame {
     }
 
     private void gear() {
-        afrAnalyzerSettings.gearEnabled= gearBox.isSelected();
+        afrAnalyzerSettings.gearEnabled = gearBox.isSelected();
         filterAndRecalculate();
     }
 
     private void gearChanged() {
-        afrAnalyzerSettings.gear = (Integer)gearComboBox.getSelectedItem();
+        afrAnalyzerSettings.gear = (Integer) gearComboBox.getSelectedItem();
         if (gearBox.isEnabled()) {
             filterAndRecalculate();
         }

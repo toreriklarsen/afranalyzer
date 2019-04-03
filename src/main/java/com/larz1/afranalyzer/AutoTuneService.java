@@ -441,21 +441,16 @@ public class AutoTuneService {
     }
 
     /**
-     * Calculate ego for each cell ion the map
+     * Calculate ego for each cell in the map
      *
      * @return
      */
     AdjAFRValue[][] calculateEgo() {
-        AdjAFRValue[][] mArr = new AdjAFRValue[tpsArray.length][rpmArray.length];
-        int engineVolume = afrAnalyzerSettings.engineVolume;
-        int maxRpm = afrAnalyzerSettings.maxRpm;
-        int pipeDiameter = afrAnalyzerSettings.pipeDiameter;
-        int pipeLength = afrAnalyzerSettings.pipeLength;
-        int nCylinders = afrAnalyzerSettings.nCylinders;
-
-        double maxFLux = CalcUtil.maxFlux(engineVolume, maxRpm);
-        double pipeVolume = CalcUtil.pipeVolume(pipeDiameter, pipeLength, nCylinders);
+        double maxFLux = CalcUtil.maxFlux(afrAnalyzerSettings.engineVolume, afrAnalyzerSettings.maxRpm);
+        double pipeVolume = CalcUtil.pipeVolume(afrAnalyzerSettings.pipeDiameter, afrAnalyzerSettings.pipeLength, afrAnalyzerSettings.nCylinders);
         double minFLux = CalcUtil.minFlux(pipeVolume, 250);
+
+        AdjAFRValue[][] mArr = new AdjAFRValue[tpsArray.length][rpmArray.length];
 
         for (int i = 0; i < tpsArray.length; i++) {
             for (int j = 0; j < rpmArray.length; j++) {
@@ -467,6 +462,8 @@ public class AutoTuneService {
     }
 
     /**
+     * Apply EGO (Exhaust Gas Offset) on each LogValue
+     *
      * @param logValues
      * @param args
      * @return
@@ -482,19 +479,13 @@ public class AutoTuneService {
             fixedEgo = (int) args[0];
         }
 
-        int engineVolume = afrAnalyzerSettings.engineVolume;
-        int maxRpm = afrAnalyzerSettings.maxRpm;
-        int pipeDiameter = afrAnalyzerSettings.pipeDiameter;
-        int pipeLength = afrAnalyzerSettings.pipeLength;
-        int nCylinders = afrAnalyzerSettings.nCylinders;
-
         int sampleInterval = CalcUtil.decideInterval(logValues);
         if (status != null) {
             status.setResolution(sampleInterval);
         }
 
-        double maxFLux = CalcUtil.maxFlux(engineVolume, maxRpm);
-        double pipeVolume = CalcUtil.pipeVolume(pipeDiameter, pipeLength, nCylinders);
+        double maxFLux = CalcUtil.maxFlux(afrAnalyzerSettings.engineVolume, afrAnalyzerSettings.maxRpm);
+        double pipeVolume = CalcUtil.pipeVolume(afrAnalyzerSettings.pipeDiameter, afrAnalyzerSettings.pipeLength, afrAnalyzerSettings.nCylinders);
         double minFLux = CalcUtil.minFlux(pipeVolume, 250);
 
         List<LogValue> values = new ArrayList<>(logValues.size());
@@ -545,7 +536,7 @@ public class AutoTuneService {
 
             System.out.format("% 6d", value.getLineNr());
             System.out.format("% 8d", value.getTime());
-            System.out.format("% 7.0f", value.getRpm());
+            System.out.format("% 7d", value.getRpm());
             System.out.format("% 5.1f", value.getTps());
             System.out.format("% 5.2f", value.getAfr());
             System.out.format("% 3.1f", value.getGear());

@@ -46,7 +46,7 @@ public class StatusBar extends JPanel implements Status {
     }
 
     public void setNumFilteredValues(int nvals) {
-        nFilteredValues.setText("  # filtered values: " + nvals);
+        nFilteredValues.setText("  # filtered out values: " + nvals);
     }
 
     public void setResolution(int nvals) {

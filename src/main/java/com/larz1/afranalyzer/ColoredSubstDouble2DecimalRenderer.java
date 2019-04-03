@@ -31,16 +31,22 @@ public class ColoredSubstDouble2DecimalRenderer implements TableCellRenderer {
             if (colorModel != null) {
                 colorControlValue = (Number) colorModel.getValueAt(row, column);
             } else {
-                colorControlValue = (Number)value;
+                colorControlValue = (Number) value;
             }
 
             DEFAULT_RENDERER.numberValue = (Number) value;
             value = DEFAULT_RENDERER.nf.format(DEFAULT_RENDERER.numberValue.doubleValue());
 
-            c.setBackground(getCellBackgroundColor(colorControlValue.doubleValue()));
-            c.setForeground(getCellForegroundColor(colorControlValue.doubleValue()));
+
+            if (table.isCellSelected(row, column)) {
+                c.setForeground(Color.white);
+                c.setBackground((Color.green));
+            } else {
+                c.setBackground(getCellBackgroundColor(colorControlValue.doubleValue()));
+                c.setForeground(getCellForegroundColor(colorControlValue.doubleValue()));
+            }
             if (column == 0) return c;
-            AfrModel am = (AfrModel)colorModel;
+            AfrModel am = (AfrModel) colorModel;
             if (am == null) return c;
             AdjAFRValue[][] mArr = am.getMapArray();
             if (mArr == null) return c;

@@ -139,8 +139,8 @@ public class LogValue {
         return ect;
     }
 
-    public void setEct(double ZC_ECT) {
-        this.ect = ZC_ECT;
+    public void setEct(double ect) {
+        this.ect = ect;
     }
 
     public double getUnadjustedAfr() {
@@ -149,7 +149,6 @@ public class LogValue {
         }
 
         return this.afr;
-
     }
 
     public int getLineNr() {
